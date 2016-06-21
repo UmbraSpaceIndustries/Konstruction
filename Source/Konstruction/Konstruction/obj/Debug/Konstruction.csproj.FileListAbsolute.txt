@@ -1,0 +1,8 @@
+D:\Dropbox\KSP_DEV\GameData\UmbraSpaceIndustries\Konstruction\Konstruction.dll
+D:\Dropbox\KSP_DEV\GameData\UmbraSpaceIndustries\Konstruction\Konstruction.pdb
+D:\Dropbox\USI-GIT\Konstruction\Source\Konstruction\Konstruction\obj\Debug\Konstruction.dll
+D:\Dropbox\USI-GIT\Konstruction\Source\Konstruction\Konstruction\obj\Debug\Konstruction.pdb
+D:\Dropbox\KSP_KSPTV\GameData\UmbraSpaceIndustries\Konstruction\Konstruction.dll
+D:\Dropbox\KSP_KSPTV\GameData\UmbraSpaceIndustries\Konstruction\Konstruction.pdb
+D:\Dropbox\KSP_KSPDEV\GameData\UmbraSpaceIndustries\Konstruction\Konstruction.dll
+D:\Dropbox\KSP_KSPDEV\GameData\UmbraSpaceIndustries\Konstruction\Konstruction.pdb
