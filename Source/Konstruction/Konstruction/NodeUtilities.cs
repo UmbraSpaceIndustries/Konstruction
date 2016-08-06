@@ -1,5 +1,6 @@
 using System.Linq;
 using UnityEngine;
+using USITools;
 
 namespace Konstruction
 {
@@ -38,6 +39,7 @@ namespace Konstruction
             foreach (var p in thisPart.children)
                 MovePart(p, offset);
         }
+
 
         public static void SwapLinks(Part thisPart, Part oldPart, Part newPart)
         {

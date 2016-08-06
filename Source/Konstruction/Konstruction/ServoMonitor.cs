@@ -9,6 +9,15 @@ using System.Collections.Generic;
 
 namespace Konstruction
 {
+    [KSPAddon(KSPAddon.Startup.EditorAny, false)]
+    public class ServoMonitor_Editor : ServoMonitor
+    {
+        public override List<Part> GetParts()
+        {
+            return EditorLogic.fetch.ship.parts;
+        }
+    }
+
     [KSPAddon(KSPAddon.Startup.Flight, false)]
     public class ServoMonitor : MonoBehaviour
     {
@@ -25,6 +34,11 @@ namespace Konstruction
         public static bool renderDisplay = false;
         private List<bool> showServo;
 
+
+        public virtual List<Part> GetParts()
+        {
+            return FlightGlobals.ActiveVessel.parts;
+        }
 
         void Awake()
         {
@@ -97,13 +111,16 @@ namespace Konstruction
             try
             {
                 var numServos = 0;
-                foreach (var p in FlightGlobals.ActiveVessel.parts)
+                foreach (var p in GetParts())
                 {
                     var servos = p.FindModulesImplementing<ModuleServo>();
                     if (servos.Any())
                     {
                         numServos++;
                         bool setPos = false;
+                        int setGoalVal = -1;
+                        bool stopAll = false;
+                        float speedMult = 1f;
 
                         if (showServo.Count < numServos)
                             showServo.Add(true);
@@ -115,6 +132,16 @@ namespace Konstruction
                         {
                             if (GUILayout.Button("-", GUILayout.Width(35)))
                                 showServo[numServos - 1] = false;
+                            if (GUILayout.Button("All Free", GUILayout.Width(70)))
+                                setGoalVal = 0;
+                            if (GUILayout.Button("All Goal", GUILayout.Width(70)))
+                                setGoalVal = 1;
+                            if (GUILayout.Button("All Stop", GUILayout.Width(70)))
+                                stopAll = true;
+                            if (GUILayout.Button("x2 Speed", GUILayout.Width(70)))
+                                speedMult = 2f;
+                            if (GUILayout.Button("1/2 Speed", GUILayout.Width(70)))
+                                speedMult = .5f;
                         }
                         else
                         {
@@ -127,16 +154,21 @@ namespace Konstruction
                         {
                             foreach (var servo in servos)
                             {
+                                servo.ServoSpeed *= speedMult;
+
+                                if (stopAll)
+                                    servo.ServoSpeed = 0;
+                                if (setGoalVal == 0)
+                                    servo.MoveToGoal = false;
+                                if (setGoalVal == 1)
+                                    servo.MoveToGoal = true;
                                 GUILayout.BeginHorizontal();
                                 GUILayout.Label("", _labelStyle, GUILayout.Width(30));
-                                GUILayout.Label(String.Format("{0}", servo.menuName), _labelStyle, GUILayout.Width(150));
-                                var goal = GUILayout.TextField(servo.goalValue.ToString("0.00"), 10, GUILayout.Width(50));
+                                GUILayout.Label(String.Format("{0}", servo.menuName), _labelStyle, GUILayout.Width(130));
+                                var goal = GUILayout.TextField(servo.goalValue.ToString(), 10, GUILayout.Width(50));
                                 var tmp = 0f;
                                 if (float.TryParse(goal, out tmp))
                                     servo.goalValue = tmp;
-                                else if (string.IsNullOrEmpty(goal))
-                                    servo.goalValue = 0;
-
                                 GUILayout.Label(String.Format("{0:0.00}", servo.DisplayPosition), _labelStyle, GUILayout.Width(50));
                                 if (GUILayout.Button("<->", GUILayout.Width(35)))
                                     servo.ServoSpeed *= -1;
@@ -144,7 +176,7 @@ namespace Konstruction
                                     servo.ServoSpeed = 0;
                                 if(servo.MoveToGoal)
                                 {
-                                    if (GUILayout.Button("-?-", GUILayout.Width(35)))
+                                    if (GUILayout.Button("-F-", GUILayout.Width(35)))
                                         servo.MoveToGoal = false;
                                 }
                                 else
@@ -159,7 +191,7 @@ namespace Konstruction
                                 if (GUILayout.Button("-1", GUILayout.Width(35)))
                                     servo.ServoSpeed -= 1;
                                 GUILayout.Label("", _labelStyle, GUILayout.Width(5));
-                                GUILayout.Label(String.Format("<color=#FFD900>{0:0}</color>", servo.ServoSpeed), _labelStyle, GUILayout.Width(20));
+                                GUILayout.Label(String.Format("<color=#FFD900>{0:0}</color>", servo.ServoSpeed), _labelStyle, GUILayout.Width(40));
                                 GUILayout.Label("", _labelStyle, GUILayout.Width(5));
                                 if (GUILayout.Button("+1", GUILayout.Width(35)))
                                     servo.ServoSpeed += 1;

@@ -188,9 +188,17 @@ namespace Konstruction
         private Vector3 GetOffset(WeldingData wData)
         {
             var totalThickness = 0f;
+            var objA = new GameObject();
+            var objB = new GameObject();
+
+            var transformA = objA.transform;
+            var transformB = objB.transform;
+
+            transformA.localPosition = wData.DockingPortA.transform.localPosition;
+            transformB.localPosition = wData.DockingPortB.transform.localPosition;
+
             var offset =
-                  wData.LinkedPartA.transform.localPosition
-                - wData.LinkedPartB.transform.localPosition;
+                transformA.localPosition - transformB.localPosition;
 
             offset.Normalize();
 
@@ -206,22 +214,29 @@ namespace Konstruction
         {
             var offset = Quaternion.Inverse(wData.DockingPortA.transform.localRotation)
                 * wData.DockingPortB.transform.localRotation;
-
-            var e = offset.eulerAngles;
-            var angleY = new Vector3(0,e.y,0);
-            return angleY;
+            var oAngle = offset.eulerAngles;
+            //Add a 180 x-flip.
+            return new Vector3(CorrectAngle(oAngle.x - 180f), oAngle.y, oAngle.z);
         }
 
+        private float CorrectAngle(float angle )
+        {
+            var a = angle;
+            if (a < 0)
+                a += 360;
+            return a;
+        }
 
         private void PerformWeld(WeldingData wData, bool compress, bool fixRotation)
         {
-            var offset = GetOffset(wData);
-            var rotation = GetRotation(wData);
-
             var nodeA = NodeUtilities.GetLinkingNode(wData.LinkedPartA, wData.DockingPortA);
             var nodeB = NodeUtilities.GetLinkingNode(wData.LinkedPartB, wData.DockingPortB);
 
+            var offset = GetOffset(wData);
+            var rotation = GetRotation(wData);
 
+            if (fixRotation)
+                wData.LinkedPartB.transform.Rotate(rotation,Space.Self);
 
             NodeUtilities.DetachPart(wData.DockingPortA);
             NodeUtilities.DetachPart(wData.DockingPortB);
@@ -241,8 +256,6 @@ namespace Konstruction
             NodeUtilities.SpawnStructures(wData.LinkedPartA, nodeA);
             NodeUtilities.SpawnStructures(wData.LinkedPartB, nodeB);
 
-            if (fixRotation)
-                wData.LinkedPartB.transform.Rotate(rotation);
 
             if (compress)
                 NodeUtilities.MovePart(wData.LinkedPartB, offset);

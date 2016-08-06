@@ -1,19 +1,12 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Security;
 using System.Text;
 using UnityEngine;
 
 namespace Konstruction
 {
-    public class ServoPosition
-    {
-        public string TransformName { get; set; }
-        public float x { get; set; }
-        public float y { get; set; }
-        public float z { get; set; }
-    }
-
     public class ModuleServo : PartModule
     {
         [KSPField] 
@@ -55,20 +48,77 @@ namespace Konstruction
             ServoSpeed -= 1;
         }
 
+
+        private float GetTraversalSpeed(float maxPos, float minPos)
+        {
+            if (ServoSpeed > 0)
+            {
+                var maxSpeed = (maxPos - DisplayPosition) / DisplaySpeed;
+                return Math.Min(ServoSpeed, maxSpeed);
+            }
+            else
+            {
+                var maxSpeed = (DisplayPosition - minPos) / DisplaySpeed;
+                return Math.Max(ServoSpeed, -maxSpeed);
+            }
+        }
+
+        private float GetMaxSpeed(float maxPos, float minPos)
+        {
+            if (ServoSpeed > 0)
+            {
+                var maxTravel = maxPos -  DisplayPosition;
+                var maxSpeed = maxTravel / DisplaySpeed;
+                return Math.Min(maxSpeed,ServoSpeed);
+            }
+            else
+            {
+                var maxTravel = minPos - DisplayPosition;
+                var maxSpeed = maxTravel / DisplaySpeed;
+                return Math.Max(maxSpeed, ServoSpeed);
+            }
+        }
+
+        private void CheckObjects()
+        {
+            if (currentPositions == null)
+            {
+                LoadPositions();
+                ApplyStartPosition();
+                SetGUIValues();
+                MonoUtilities.RefreshContextWindows(part);
+            }
+
+            if (ServoTransforms == null)
+                SetupTransforms();
+        }
+
         public void FixedUpdate()
         {
             if (Math.Abs(ServoSpeed) < ResourceUtilities.FLOAT_TOLERANCE)
                 return;
 
+            try
+            {
+                CheckObjects();
+                SetGUIValues();
 
-            if (mode == "rotate")
-                UpdateRotators();
-            else if (mode == "translate")
-                UpdateTranslators();
+                if (mode == "rotate")
+                    ProcessRotator();
+                else
+                    ProcessTraversal();
+            }
+            catch (Exception ex)
+            {
+                print("ERROR in ModuleServo (FixedUpdate) " + ex.Message);
+            }
+        }
 
-            var maxTravel = Math.Abs(DisplayPosition - goalValue);
+        private void ProcessRotator()
+        {
             if (MoveToGoal)
             {
+                var maxTravel = Math.Abs(DisplayPosition - goalValue);
                 if (maxTravel <= ResourceUtilities.FLOAT_TOLERANCE)
                     return;
                 //Normalize goal speed
@@ -77,24 +127,64 @@ namespace Konstruction
                 if (DisplayPosition > goalValue)
                     ServoSpeed *= -1;
             }
+            else
+            {
+                var servo = ServoTransforms.First();
+                if (servo.ChangeX)
+                    ServoSpeed = GetMaxSpeed(servo.MaxRange.x, servo.MinRange.x);
+                if (servo.ChangeY)
+                    ServoSpeed = GetMaxSpeed(servo.MaxRange.y, servo.MinRange.y);
+                if (servo.ChangeZ)
+                    ServoSpeed = GetMaxSpeed(servo.MaxRange.z, servo.MinRange.z);
+            }
+            if (Math.Abs(DisplaySpeed) < ResourceUtilities.FLOAT_TOLERANCE)
+                return;
 
+            UpdateRotators();
         }
+
+
+        private void ProcessTraversal()
+        {
+            if (MoveToGoal)
+            {
+                var maxTravel = Math.Abs(DisplayPosition - goalValue);
+                if (maxTravel <= ResourceUtilities.FLOAT_TOLERANCE)
+                    return;
+                //Normalize goal speed
+                var goalSpeed = Math.Abs(maxTravel / DisplaySpeed);
+                ServoSpeed = Math.Min(Math.Abs(ServoSpeed), goalSpeed);
+                if (DisplayPosition > goalValue)
+                    ServoSpeed *= -1;
+            }
+            else
+            {
+                var servo = ServoTransforms.First();
+
+                if (servo.ChangeX)
+                {
+                    ServoSpeed = GetTraversalSpeed(servo.MaxRange.x, servo.MinRange.x);
+                }
+                if (servo.ChangeY)
+                {
+                    ServoSpeed = GetTraversalSpeed(servo.MaxRange.y, servo.MinRange.y);
+                }
+                if (servo.ChangeZ)
+                {
+                    ServoSpeed = GetTraversalSpeed(servo.MaxRange.z, servo.MinRange.z);
+                }
+            }
+            if (Math.Abs(DisplaySpeed) < ResourceUtilities.FLOAT_TOLERANCE)
+                return;
+
+            UpdateTranslators();
+        }
+
+
+
 
         private void UpdateTranslators()
         {
-            if (ServoTransforms == null)
-                SetupTransforms();
-            //If any of the transforms in this servo set are out of range... stop.   This is because
-            //multiple modules could be messing with these.
-            foreach (var servo in ServoTransforms)
-            {
-                if (OutOfRange(servo))
-                {
-                    ServoSpeed = 0f;
-                    return;
-                }
-            }
-
             //Transform adjustment time!
             foreach (var servo in ServoTransforms)
             {
@@ -120,19 +210,6 @@ namespace Konstruction
 
         private void UpdateRotators()
         {
-            if(ServoTransforms == null)
-                SetupTransforms();
-            //If any of the transforms in this servo set are out of range... stop.   This is because
-            //multiple modules could be messing with these.
-            foreach (var servo in ServoTransforms)
-            {
-                if (OutOfAngle(servo))
-                {
-                    ServoSpeed = 0f;
-                    return;
-                }
-            }
-
             //Transform adjustment time!
             foreach (var servo in ServoTransforms)
             {
@@ -155,80 +232,10 @@ namespace Konstruction
             }
         }
 
-        private bool OutOfRange(ServoData servo)
-        {
-            if (servo.ChangeX)
-            {
-                var newPos = servo.ServoTransform.localPosition.x + (servo.StepAmount.x * ServoSpeed);
-                DisplayPosition = newPos;
-                DisplaySpeed = servo.StepAmount.x;
-                if (newPos > servo.MaxRange.x || newPos < servo.MinRange.x)
-                    return true;
-            }
-            if (servo.ChangeY)
-            {
-                var newPos = servo.ServoTransform.localPosition.y + (servo.StepAmount.y * ServoSpeed);
-                DisplayPosition = newPos;
-                DisplaySpeed = servo.StepAmount.y;
-                if (newPos > servo.MaxRange.y || newPos < servo.MinRange.y)
-                    return true;
-            }
-            if (servo.ChangeZ)
-            {
-                var newPos = servo.ServoTransform.localPosition.z + (servo.StepAmount.z * ServoSpeed);
-                DisplayPosition = newPos;
-                DisplaySpeed = servo.StepAmount.z;
-                if (newPos > servo.MaxRange.z || newPos < servo.MinRange.z)
-                    return true;
-            }
-            return false;
-        }
-
-        private bool CheckAngle(float step, float angle, float min, float max)
-        {
-            float change = step * ServoSpeed;
-            float oldAngle = NormalizedAngle(angle);
-            float newAngle = oldAngle + change;
-
-            if (newAngle > max || newAngle < min)
-            {
-                return true;
-            }
-
-            DisplayPosition = NormalizedAngle(newAngle);
-            DisplaySpeed = step;
-            return false;
-        }
-
-        private float NormalizedAngle(float angle)
-        {
-            if (angle > 180f)
-                return angle -360f;
-            return angle;
-        }
-
-        private bool OutOfAngle(ServoData servo)
-        {
-            if (servo.ChangeX)
-            {
-                return CheckAngle(servo.StepAmount.x, servo.CurrentPosition.x, servo.MinRange.x, servo.MaxRange.x);
-            }
-            if (servo.ChangeY)
-            {
-                return CheckAngle(servo.StepAmount.y, servo.CurrentPosition.y, servo.MinRange.y, servo.MaxRange.y);
-            }
-            if (servo.ChangeZ)
-            {
-                return CheckAngle(servo.StepAmount.z, servo.CurrentPosition.z, servo.MinRange.z, servo.MaxRange.z);
-            }
-            return false;
-        }
-
         public override void OnStart(StartState state)
         {
             SetupTransforms();
         }
-
 
         private void SetupTransforms()
         {
@@ -247,8 +254,31 @@ namespace Konstruction
             }
             LoadPositions();
             ApplyStartPosition();
+            SetGUIValues();
             MonoUtilities.RefreshContextWindows(part);
         }
+
+        private void SetGUIValues()
+        {
+            var pos = currentPositions.First();
+            var servo = ServoTransforms.Find(s => s.ServoTransform.transform.name == pos.TransformName);
+            if (servo.ChangeX)
+            {
+                DisplayPosition = pos.x;
+                DisplaySpeed = servo.StepAmount.x;
+            }
+            if (servo.ChangeY)
+            {
+                DisplayPosition = pos.y;
+                DisplaySpeed = servo.StepAmount.y;
+            }
+            if (servo.ChangeZ)
+            {
+                DisplayPosition = pos.z;
+                DisplaySpeed = servo.StepAmount.z;
+            }
+        }
+
 
         private void SavePositions()
         {
@@ -265,6 +295,13 @@ namespace Konstruction
                 config.Append(p.z.ToString("n6"));
             }
             transformDeltas = config.ToString().Substring(1);
+        }
+
+        public void SetGoal(float goal,float speed)
+        {
+            goalValue = goal;
+            MoveToGoal = true;
+            ServoSpeed = speed;
         }
 
         private void LoadPositions()
@@ -287,7 +324,7 @@ namespace Konstruction
             //And we may be missing some...
             foreach (var t in ServoTransforms)
             {
-                if (!currentPositions.Any(p=>p.TransformName == t.ServoTransform.transform.name))
+                if (currentPositions.All(p => p.TransformName != t.ServoTransform.transform.name))
                 {
                     currentPositions.Add(new ServoPosition
                     {

@@ -17,7 +17,7 @@
     <DebugSymbols>true</DebugSymbols>
     <DebugType>full</DebugType>
     <Optimize>false</Optimize>
-    <OutputPath>..\..\..\..\..\KSP_KSPDEV\GameData\UmbraSpaceIndustries\Konstruction\</OutputPath>
+    <OutputPath>..\..\..\..\..\KSP_KSPTV\GameData\UmbraSpaceIndustries\Konstruction\</OutputPath>
     <DefineConstants>DEBUG;TRACE</DefineConstants>
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
@@ -64,15 +64,20 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="ModuleConstructedPart.cs" />
+    <Compile Include="ModuleCounterweight.cs" />
     <Compile Include="ModuleFlexiLeg.cs" />
     <Compile Include="ModuleFlexiLegController.cs" />
+    <Compile Include="ModuleGrippyWheel.cs" />
+    <Compile Include="ModuleGroundAnchor.cs" />
+    <Compile Include="ModuleMagneticNode.cs" />
     <Compile Include="ModulePiston.cs" />
     <Compile Include="ModuleServo.cs" />
-    <Compile Include="ModuleStructuralNode.cs" />
+    <Compile Include="ModuleServoConfig.cs" />
     <Compile Include="ModuleWeldablePort.cs" />
     <Compile Include="NodeUtilities.cs" />
     <Compile Include="ServoData.cs" />
     <Compile Include="ServoMonitor.cs" />
+    <Compile Include="ServoPosition.cs" />
     <Compile Include="WeldingData.cs" />
   </ItemGroup>
   <ItemGroup>
