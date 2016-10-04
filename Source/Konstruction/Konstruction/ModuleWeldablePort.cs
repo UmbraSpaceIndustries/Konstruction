@@ -17,16 +17,16 @@ namespace Konstruction
             MergeParts(true,false);
         }
 
-        [KSPField(guiName = "Port Force", isPersistant = true, guiActive = true, guiActiveEditor = false), UI_FloatRange(stepIncrement = 0.5f, maxValue = 25f, minValue = 0f)]
+        [KSPField(guiName = "Port Force", isPersistant = true, guiActive = true, guiActiveEditor = false), UI_FloatRange(stepIncrement = 0.5f, maxValue = 50f, minValue = 0f)]
         public float portForce = 2;
 
-        [KSPField(guiName = "Port Torque", isPersistant = true, guiActive = true, guiActiveEditor = false), UI_FloatRange(stepIncrement = 0.5f, maxValue = 25, minValue = 0f)]
+        [KSPField(guiName = "Port Torque", isPersistant = true, guiActive = true, guiActiveEditor = false), UI_FloatRange(stepIncrement = 0.5f, maxValue = 50, minValue = 0f)]
         public float portTorque = 2;
 
-        [KSPField(guiName = "Port Roll", isPersistant = true, guiActive = true, guiActiveEditor = false), UI_FloatRange(stepIncrement = 0.5f, maxValue = 25, minValue = 0f)]
+        [KSPField(guiName = "Port Roll", isPersistant = true, guiActive = true, guiActiveEditor = false), UI_FloatRange(stepIncrement = 0.5f, maxValue = 50, minValue = 0f)]
         public float portRoll = 2;
 
-        [KSPField(guiName = "Port Range", isPersistant = true, guiActive = true, guiActiveEditor = false), UI_FloatRange(stepIncrement = 0.1f, maxValue = 10f, minValue = 0f)]
+        [KSPField(guiName = "Port Range", isPersistant = true, guiActive = true, guiActiveEditor = false), UI_FloatRange(stepIncrement = 0.1f, maxValue = 20f, minValue = 0f)]
         public float portRange = 0.5f;
 
         [KSPField(guiName = "Angle Snap", isPersistant = true, guiActive = true, guiActiveEditor = false), UI_FloatRange(stepIncrement = 15f, maxValue = 180f, minValue = 0f)]
