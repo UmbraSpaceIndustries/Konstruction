@@ -35,6 +35,7 @@ namespace Konstruction
 
         public float DisplayPosition;
         public float DisplaySpeed;
+        public string GoalString;
 
         [KSPAction("Increase Speed")]
         public void IncreaseAction(KSPActionParam param)

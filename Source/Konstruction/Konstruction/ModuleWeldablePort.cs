@@ -9,47 +9,31 @@ using TestScripts;
 
 namespace Konstruction
 {
-    public class ModuleMultiWelder : PartModule
-    {
-        [KSPEvent(guiActive = true, guiActiveEditor = false,
-            guiName = "Weld All Parts")]
-        public void WeldAllParts()
-        {
-            var pList = new List<Part>();
-            if (part.parent.Modules.Contains("ModuleWeldablePort"))
-                pList.Add(part.parent);
-
-            pList.AddRange(part.children.Where(c => c.Modules.Contains("ModuleWeldablePort")));
-
-            for (int i = pList.Count - 1; i >= 0; i--)
-            {
-                var mod = pList[i].FindModuleImplementing<ModuleWeldablePort>();
-                if (mod != null)
-                    mod.WeldParts();
-            }
-        }
-
-    }
-
     public class ModuleWeldablePort : PartModule
     {
-        [KSPEvent(active = true, guiActive = true, guiActiveEditor = false, guiActiveUnfocused = true, unfocusedRange = 10, guiName = "Weld In Place")]
-        public void WeldParts()
-        {
-            MergeParts(false,false);
-        }
-
         [KSPEvent(active = true, guiActive = true, guiActiveEditor = false, guiActiveUnfocused = true, unfocusedRange = 10, guiName = "Compress Parts")]
         public void CompressParts()
         {
             MergeParts(true,false);
         }
 
-        [KSPEvent(active = true, guiActive = true, guiActiveEditor = false, guiActiveUnfocused = true, unfocusedRange = 10, guiName = "Compress with Rotation")]
-        public void ConstructParts()
-        {
-            MergeParts(true,true);
-        }
+        [KSPField(guiName = "Port Force", isPersistant = true, guiActive = true, guiActiveEditor = false), UI_FloatRange(stepIncrement = 0.5f, maxValue = 25f, minValue = 0f)]
+        public float portForce = 2;
+
+        [KSPField(guiName = "Port Torque", isPersistant = true, guiActive = true, guiActiveEditor = false), UI_FloatRange(stepIncrement = 0.5f, maxValue = 25, minValue = 0f)]
+        public float portTorque = 2;
+
+        [KSPField(guiName = "Port Roll", isPersistant = true, guiActive = true, guiActiveEditor = false), UI_FloatRange(stepIncrement = 0.5f, maxValue = 25, minValue = 0f)]
+        public float portRoll = 2;
+
+        [KSPField(guiName = "Port Range", isPersistant = true, guiActive = true, guiActiveEditor = false), UI_FloatRange(stepIncrement = 0.1f, maxValue = 10f, minValue = 0f)]
+        public float portRange = 0.5f;
+
+        [KSPField(guiName = "Angle Snap", isPersistant = true, guiActive = true, guiActiveEditor = false), UI_FloatRange(stepIncrement = 15f, maxValue = 180f, minValue = 0f)]
+        public float portSnap = 90f;
+
+
+        private ModuleDockingNode dock;
 
         public override void OnStart(StartState state)
         {
@@ -60,15 +44,21 @@ namespace Konstruction
                 Events["CompressParts"].guiActive = true;
                 Events["CompressParts"].guiActiveUnfocused = true;
                 Events["CompressParts"].active = true;
-
-                Events["ConstructParts"].guiActive = true;
-                Events["ConstructParts"].guiActiveUnfocused = true;
-                Events["ConstructParts"].active = true;
+                dock = part.FindModuleImplementing<ModuleDockingNode>();
             }
             catch (Exception ex)
             {
                 Debug.Log(String.Format("[ModuleWeldablePart] Error {0} in OnStart", ex.Message));
             }
+        }
+
+        public override void OnUpdate()
+        {
+            dock.acquireForce = portForce;
+            dock.acquireTorque = portTorque;
+            dock.acquireTorqueRoll = portRoll;
+            dock.acquireRange = portRange;
+            dock.snapOffset = portSnap;
         }
 
         private void MergeParts(bool compress, bool fixRotation)
@@ -277,7 +267,7 @@ namespace Konstruction
 
         private static void SoftExplode(Part thisPart)
         {
-            thisPart.explosionPotential = 0;
+            thisPart.explosionPotential = 0.1f;
             thisPart.explode();
         }
     }

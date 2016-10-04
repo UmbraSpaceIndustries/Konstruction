@@ -130,9 +130,9 @@ namespace Konstruction
         private bool MagnetHasPower()
         {
             var ecCost = powerCost*magPercent;
-            if (broker.AmountAvailable(part, "ElectricCharge", TimeWarp.fixedDeltaTime, "ALL_VESSEL") >= ecCost)
+            if (broker.AmountAvailable(part, "ElectricCharge", TimeWarp.fixedDeltaTime, ResourceFlowMode.ALL_VESSEL) >= ecCost)
             {
-                broker.RequestResource(part, "ElectricCharge", ecCost, TimeWarp.fixedDeltaTime, "ALL_VESSEL");
+                broker.RequestResource(part, "ElectricCharge", ecCost, TimeWarp.fixedDeltaTime, ResourceFlowMode.ALL_VESSEL);
                 return true;
             }
             else

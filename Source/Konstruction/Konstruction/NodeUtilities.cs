@@ -9,7 +9,7 @@ namespace Konstruction
         public static void SpawnStructures(Part thisPart, AttachNode thisNode)
         {
             var structList = thisPart.FindModulesImplementing<ModuleStructuralNode>();
-            foreach (var s in structList.Where(s => s.attachNodeName == thisNode.id))
+            foreach (var s in structList.Where(s => s.attachNodeNames.Contains(thisNode.id)))
             {
                 s.SpawnStructure();
             }

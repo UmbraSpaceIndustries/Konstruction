@@ -23,7 +23,7 @@ namespace Konstruction
     {
         private ApplicationLauncherButton servoButton;
         private IButton planLogTButton;
-        private Rect _windowPosition = new Rect(300, 60, 700, 400);
+        private Rect _windowPosition = new Rect(300, 60, 800, 400);
         private GUIStyle _windowStyle;
         private GUIStyle _labelStyle;
         private GUIStyle _buttonStyle;
@@ -105,7 +105,7 @@ namespace Konstruction
         private void GenerateWindow()
         {
             GUILayout.BeginVertical();
-            scrollPos = GUILayout.BeginScrollView(scrollPos, _scrollStyle, GUILayout.Width(680), GUILayout.Height(350));
+            scrollPos = GUILayout.BeginScrollView(scrollPos, _scrollStyle, GUILayout.Width(780), GUILayout.Height(350));
             GUILayout.BeginVertical();
 
             try
@@ -165,7 +165,9 @@ namespace Konstruction
                                 GUILayout.BeginHorizontal();
                                 GUILayout.Label("", _labelStyle, GUILayout.Width(30));
                                 GUILayout.Label(String.Format("{0}", servo.menuName), _labelStyle, GUILayout.Width(130));
-                                var goal = GUILayout.TextField(servo.goalValue.ToString(), 10, GUILayout.Width(50));
+                                var goal = GUILayout.TextField(servo.GoalString, 10, GUILayout.Width(50));
+                                GUILayout.Label(String.Format("<color=#fce700>G: [{0}]</color>", servo.goalValue), _labelStyle, GUILayout.Width(80));
+                                servo.GoalString = goal;
                                 var tmp = 0f;
                                 if (float.TryParse(goal, out tmp))
                                     servo.goalValue = tmp;
@@ -233,7 +235,7 @@ namespace Konstruction
         private void InitStyles()
         {
             _windowStyle = new GUIStyle(HighLogic.Skin.window);
-            _windowStyle.fixedWidth = 700f;
+            _windowStyle.fixedWidth = 800f;
             _windowStyle.fixedHeight = 400f;
             _labelStyle = new GUIStyle(HighLogic.Skin.label);
             _buttonStyle = new GUIStyle(HighLogic.Skin.button);
