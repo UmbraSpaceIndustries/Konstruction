@@ -16,7 +16,7 @@ namespace Konstruction
         [KSPEvent(guiActive = false, guiName = "Unload Ballast")]
         public void UnloadBallast()
         {
-            ScreenMessages.PostScreenMessage("You load a bunch of rocks and dirt into the counterweight");
+            ScreenMessages.PostScreenMessage("You remove a bunch of rocks and dirt from the counterweight");
             res.amount = 0;
             ToggleLoadBallast(true);
         }

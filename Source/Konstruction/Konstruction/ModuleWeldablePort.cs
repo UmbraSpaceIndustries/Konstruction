@@ -17,6 +17,17 @@ namespace Konstruction
             MergeParts(true,false);
         }
 
+        [KSPEvent(active = true, guiActive = true, guiActiveEditor = false, guiActiveUnfocused = true, unfocusedRange = 10, guiName = "ResetAcquire")]
+        public void ResetAcquire()
+        {
+            //Clear the 'Other Node' on both ports
+            if (dock.otherNode != null)
+            {
+                dock.otherNode.otherNode = null;
+                dock.otherNode = null;
+            }
+        }
+
         [KSPField(guiName = "Port Force", isPersistant = true, guiActive = true, guiActiveEditor = false), UI_FloatRange(stepIncrement = 0.5f, maxValue = 50f, minValue = 0f)]
         public float portForce = 2;
 
@@ -59,6 +70,7 @@ namespace Konstruction
             dock.acquireTorqueRoll = portRoll;
             dock.acquireRange = portRange;
             dock.snapOffset = portSnap;
+            dock.snapRotation = !(Math.Abs(portSnap) < 0.01f);
         }
 
         private void MergeParts(bool compress, bool fixRotation)

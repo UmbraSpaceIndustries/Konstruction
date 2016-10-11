@@ -1,15 +1,15 @@
 {
-     "NAME":"USI Tools",
-	 "URL":"https://raw.githubusercontent.com/BobPalmer/UmbraSpaceIndustries/master/FOR_RELEASE/GameData/000_USITools/USITools.version",
-	 "DOWNLOAD":"https://github.com/BobPalmer/UmbraSpaceIndustries/releases",
+     "NAME":"Community Resource Pack",
+     "URL":"https://raw.githubusercontent.com/BobPalmer/CommunityResourcePack/master/FOR_RELEASE/GameData/CommunityResourcePack/CRP.version",
+     "DOWNLOAD":"https://github.com/BobPalmer/CommunityResourcePack/releases",
      "GITHUB":{
          "USERNAME":"BobPalmer",
-         "REPOSITORY":"UmbraSpaceIndustries",
+         "REPOSITORY":"CommunityResourcePack",
          "ALLOW_PRE_RELEASE":false
      },
      "VERSION":{
          "MAJOR":0,
-         "MINOR":8,
+         "MINOR":6,
          "PATCH":0,
          "BUILD":0
      },
@@ -20,7 +20,7 @@
      },
      "KSP_VERSION_MIN":{
          "MAJOR":1,
-         "MINOR":2,
+         "MINOR":1,
          "PATCH":0
      },
      "KSP_VERSION_MAX":{

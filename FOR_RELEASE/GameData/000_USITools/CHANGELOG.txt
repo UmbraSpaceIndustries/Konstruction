@@ -1,4 +1,4 @@
-0.7.5 - (KSP 1.2)
+0.8.0 - (KSP 1.2)
 ------------------
 Fixed issue with version file
 Engineers can now operate power couplers if they are within scavange range (thanks tomforwood).
@@ -6,6 +6,7 @@ Two way auto transfers!  Resources above 85% are now pushed to warehouses (thank
 Modified pulse drives in support of the Nuclear Rockets mod
 Added new USI Part Catalog options
 Swappable Converters!
+Non-Engineers have (potentially) learned how to make things explode!  Settable as a config option
 
 0.7.4 - (KSP 1.1.3)
 ------------------

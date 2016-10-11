@@ -34,7 +34,7 @@ namespace Konstruction
         public bool partsOnly =true;
 
         [KSPField(guiName = "Magnet Strength", isPersistant = true, guiActive = true, guiActiveEditor = false), UI_FloatRange(stepIncrement = 1f, maxValue = 100f, minValue = 0f)]
-        public float magPercent = 100f;
+        public float magPercent = 0f;
 
         [KSPField(isPersistant = true)]
         public bool magnetIsEnabled = false;
