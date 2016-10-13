@@ -31,7 +31,7 @@ namespace Konstruction
 
         public static void MovePart(Part thisPart, Vector3 offset)
         {
-            if (thisPart.Rigidbody != null)
+            if (thisPart.Rigidbody != null && thisPart.physicalSignificance == Part.PhysicalSignificance.FULL)
                 thisPart.transform.position += offset;
 
             thisPart.UpdateOrgPosAndRot(thisPart.vessel.rootPart);
