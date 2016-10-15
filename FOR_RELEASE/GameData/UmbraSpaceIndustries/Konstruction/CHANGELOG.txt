@@ -1,8 +1,13 @@
+0.1.4 - 2016.10.15
+------------------
+Fixed issue where some parts would shift on compression (Thanks DefiantZombie!)
+
 0.1.3 - (KSP 1.2)
 -----------------
 Removed command probe options from truss segments
 Fixed Akita wheel name
 Magnets are now twice as powerful and use 1/10th of the EC
+More nodes on the cradle!
 
 0.1.2 - (KSP 1.2)
 -----------------
