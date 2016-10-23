@@ -23,7 +23,7 @@ namespace Konstruction
     {
         private ApplicationLauncherButton servoButton;
         private IButton planLogTButton;
-        private Rect _windowPosition = new Rect(300, 60, 800, 400);
+        private Rect _windowPosition = new Rect(300, 60, 830, 400);
         private GUIStyle _windowStyle;
         private GUIStyle _labelStyle;
         private GUIStyle _buttonStyle;
@@ -105,7 +105,7 @@ namespace Konstruction
         private void GenerateWindow()
         {
             GUILayout.BeginVertical();
-            scrollPos = GUILayout.BeginScrollView(scrollPos, _scrollStyle, GUILayout.Width(780), GUILayout.Height(350));
+            scrollPos = GUILayout.BeginScrollView(scrollPos, _scrollStyle, GUILayout.Width(810), GUILayout.Height(350));
             GUILayout.BeginVertical();
 
             try
@@ -126,28 +126,87 @@ namespace Konstruction
                             showServo.Add(true);
 
                         GUILayout.BeginHorizontal();
-                        GUILayout.Label(String.Format("<color=#FFFFFF>[{0}] {1}</color>", numServos,p.partInfo.title), _labelStyle, GUILayout.Width(135));
 
                         if (showServo[numServos - 1])
                         {
                             if (GUILayout.Button("-", GUILayout.Width(35)))
                                 showServo[numServos - 1] = false;
-                            if (GUILayout.Button("All Free", GUILayout.Width(70)))
-                                setGoalVal = 0;
-                            if (GUILayout.Button("All Goal", GUILayout.Width(70)))
-                                setGoalVal = 1;
-                            if (GUILayout.Button("All Stop", GUILayout.Width(70)))
-                                stopAll = true;
-                            if (GUILayout.Button("x2 Speed", GUILayout.Width(70)))
-                                speedMult = 2f;
-                            if (GUILayout.Button("1/2 Speed", GUILayout.Width(70)))
-                                speedMult = .5f;
                         }
                         else
                         {
                             if (GUILayout.Button("+", GUILayout.Width(35)))
                                 showServo[numServos - 1] = true;
                         }
+
+
+                        GUILayout.Label(String.Format("<color=#FFFFFF>[{0}] {1}</color>", numServos,p.partInfo.title), _labelStyle, GUILayout.Width(230));
+
+                        if (p.HighlightActive)
+                        {
+                            if (GUILayout.Button("-H", GUILayout.Width(35)))
+                            {
+                                p.highlightColor = Color.magenta;
+                                p.HighlightActive = false;
+                                p.Highlight(false);
+                            }
+                        }
+                        else
+                        {
+                            if (GUILayout.Button("+H", GUILayout.Width(35)))
+                            {
+                                p.highlightColor = Color.magenta;
+                                p.HighlightActive = true;
+                                p.Highlight(true);
+                            }
+                        }
+
+
+                        var sGroup = p.FindModuleImplementing<ModuleServoGroup>();
+                        if (sGroup != null)
+                        {
+                            if (sGroup.GroupState == 0)
+                            {
+                                if (GUILayout.Button("Group: None", GUILayout.Width(140)))
+                                    sGroup.GroupState++;
+                            }
+                            else if (sGroup.GroupState == 1)
+                            {
+                                if (GUILayout.Button("Group: Slave", GUILayout.Width(140)))
+                                    sGroup.GroupState++;
+                            }
+                            else
+                            {
+                                if (GUILayout.Button("Group: Master", GUILayout.Width(140)))
+                                    sGroup.GroupState = 0;
+                            }
+
+                            if (sGroup.GroupID < 6)
+                            {
+                                if (GUILayout.Button("ID: " + sGroup.GroupID, GUILayout.Width(70)))
+                                    sGroup.GroupID++;
+                            }
+                            else
+                            {
+                                if (GUILayout.Button("ID: " + sGroup.GroupID, GUILayout.Width(70)))
+                                    sGroup.GroupID = 0;
+                            }
+                        }
+
+
+                        if (showServo[numServos - 1])
+                        {
+                            if (GUILayout.Button("All Free", GUILayout.Width(70)))
+                                setGoalVal = 0;
+                            if (GUILayout.Button("All Goal", GUILayout.Width(70)))
+                                setGoalVal = 1;
+                            if (GUILayout.Button("All Stop", GUILayout.Width(70)))
+                                stopAll = true;
+
+                        }
+
+
+
+
                         GUILayout.EndHorizontal();
 
                         if (showServo[numServos - 1])
@@ -192,6 +251,24 @@ namespace Konstruction
                                     servo.ServoSpeed -= 10;
                                 if (GUILayout.Button("-1", GUILayout.Width(35)))
                                     servo.ServoSpeed -= 1;
+
+                                if (servo.GroupBehavior == 0)
+                                {
+                                    if (GUILayout.Button("+", GUILayout.Width(25)))
+                                        servo.GroupBehavior += 1;
+                                }
+                                else if (servo.GroupBehavior == 1)
+                                {
+                                    if (GUILayout.Button("-", GUILayout.Width(25)))
+                                        servo.GroupBehavior += 1;
+                                }
+                                else
+                                {
+                                    if (GUILayout.Button("o", GUILayout.Width(25)))
+                                        servo.ServoSpeed = 0;
+                                }
+
+
                                 GUILayout.Label("", _labelStyle, GUILayout.Width(5));
                                 GUILayout.Label(String.Format("<color=#FFD900>{0:0}</color>", servo.ServoSpeed), _labelStyle, GUILayout.Width(40));
                                 GUILayout.Label("", _labelStyle, GUILayout.Width(5));
@@ -235,7 +312,7 @@ namespace Konstruction
         private void InitStyles()
         {
             _windowStyle = new GUIStyle(HighLogic.Skin.window);
-            _windowStyle.fixedWidth = 800f;
+            _windowStyle.fixedWidth = 830f;
             _windowStyle.fixedHeight = 400f;
             _labelStyle = new GUIStyle(HighLogic.Skin.label);
             _buttonStyle = new GUIStyle(HighLogic.Skin.button);
