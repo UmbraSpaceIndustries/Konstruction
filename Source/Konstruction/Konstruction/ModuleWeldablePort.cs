@@ -133,6 +133,42 @@ namespace Konstruction
             PerformWeld(wData, compress, fixRotation);
         }
 
+        private bool ResetRootPart()
+        {
+            if (vessel.parts.Count < 4)
+            {
+                ScreenMessages.PostScreenMessage("The vessel must have at least four parts to perform welding!");
+                return false;
+            }
+
+            var potParts = new List<Part>();
+
+            var count = part.children.Count;
+            for (int i = 0; i < count; ++i)
+            {
+                potParts.Add(part.children[i]);
+                potParts.AddRange(part.children[i].children);
+            }
+
+            //Now roll through the potParts and find our match.  This covers
+            //both children and grandchildren... so we had better be able to find a part!
+
+            var pCount = potParts.Count;
+            for (int i = 0; i < pCount; ++i)
+            {
+                var c = potParts[i];
+                //Can't be another weldable port...
+                if (c.FindModuleImplementing<ModuleWeldablePort>() != null)
+                    continue;
+
+                //Winner!  This is our new root
+                c.SetHierarchyRoot(vessel.rootPart);
+                return true;
+            }
+            //No luck...
+            return false;
+        }
+
         private bool IsWeldablePort(Part p)
         {
             if (p == null)
