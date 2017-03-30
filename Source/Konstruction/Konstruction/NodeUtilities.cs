@@ -36,7 +36,7 @@ namespace Konstruction
 
             thisPart.UpdateOrgPosAndRot(thisPart.vessel.rootPart);
 
-            foreach (var p in thisPart.children)
+            foreach (var p in thisPart.children.Where(p => p.attachMode == AttachModes.STACK))
                 MovePart(p, offset);
         }
 
