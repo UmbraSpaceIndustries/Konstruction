@@ -3,12 +3,16 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Security;
 using System.Text;
+using ModuleWheels;
 using UnityEngine;
 
 namespace Konstruction
 {
     public class ModuleServo : PartModule
     {
+        [KSPField]
+        public string wheelTransform = "deployTgt";
+
         [KSPField] 
         public string menuName = "Servo";
 
@@ -28,6 +32,9 @@ namespace Konstruction
 
         [KSPField(isPersistant = true)]
         public bool MoveToGoal;
+
+        [KSPField(isPersistant = true)]
+        public int GroupBehavior = 0;
 
         public float ServoSpeed = 0f;
         public List<ServoPosition> currentPositions;
@@ -94,6 +101,28 @@ namespace Konstruction
                 SetupTransforms();
         }
 
+        private ModuleWheelBase _wheel;
+        private Transform _wheelTransform;
+        private Vector3 _oldPos;
+        private Vector3 _oldRot;
+
+        private void ResetWheelPosition()
+        {
+            if (_wheel == null || _wheelTransform == null)
+                return;
+
+            var dis = (_oldPos - _wheelTransform.position).sqrMagnitude;
+            var rot = (_oldRot - _wheelTransform.rotation.eulerAngles).sqrMagnitude;
+
+            if (dis < 0.00001 && rot < 0.00001)
+                return;
+
+            _wheel.Wheel.SetWheelTransform(_wheelTransform.position, _wheelTransform.rotation);
+            _oldPos = new Vector3(_wheelTransform.position.x, _wheelTransform.position.y, _wheelTransform.position.z);
+            _oldRot = new Vector3(_wheelTransform.rotation.eulerAngles.x, _wheelTransform.rotation.eulerAngles.y, _wheelTransform.rotation.eulerAngles.z);
+
+        }
+
         public void FixedUpdate()
         {
             if (Math.Abs(ServoSpeed) < ResourceUtilities.FLOAT_TOLERANCE)
@@ -108,6 +137,7 @@ namespace Konstruction
                     ProcessRotator();
                 else
                     ProcessTraversal();
+                ResetWheelPosition();
             }
             catch (Exception ex)
             {
@@ -240,6 +270,11 @@ namespace Konstruction
 
         private void SetupTransforms()
         {
+            if (_wheel == null)
+                _wheel = part.FindModuleImplementing<ModuleWheelBase>();
+            if (_wheelTransform == null)
+                _wheelTransform = part.FindModelTransform(wheelTransform);
+
             ServoTransforms = new List<ServoData>();
             var tList = transformConfig.Split(',');
             for (int i = 0; i < tList.Count(); i += 10)

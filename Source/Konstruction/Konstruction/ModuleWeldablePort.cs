@@ -17,7 +17,13 @@ namespace Konstruction
             MergeParts(true,false);
         }
 
-        [KSPEvent(active = true, guiActive = true, guiActiveEditor = false, guiActiveUnfocused = true, unfocusedRange = 10, guiName = "ResetAcquire")]
+        [KSPEvent(active = true, guiActive = true, guiActiveEditor = false, guiActiveUnfocused = true, unfocusedRange = 10, guiName = "Compress Parts (Rotate)")]
+        public void CompressPartsRot()
+        {
+            MergeParts(true, true);
+        }
+
+        [KSPEvent(active = true, guiActive = true, guiActiveEditor = false, guiActiveUnfocused = true, unfocusedRange = 10, guiName = "Reset Acquire")]
         public void ResetAcquire()
         {
             //Clear the 'Other Node' on both ports
@@ -28,25 +34,57 @@ namespace Konstruction
             }
         }
 
-        [KSPField(guiName = "Port Force", isPersistant = true, guiActive = true, guiActiveEditor = false), UI_FloatRange(stepIncrement = 0.5f, maxValue = 50f, minValue = 0f)]
+        [KSPEvent(active = true, guiActive = true, guiActiveEditor = false, guiActiveUnfocused = true, unfocusedRange = 10, guiName = "Multi-Weld")]
+        public void MultiWeld()
+        {
+            //we're going to start by welding every other port other than this.
+            var allPorts = vessel.FindPartModulesImplementing<ModuleWeldablePort>();
+            var weldPorts = new List<Part>();
+            weldPorts.Add(part);
+            foreach (var p in allPorts)
+            {
+                bool addPart = true;
+                var thisPart = p.part;
+                //Skip anyone already in a set.
+                foreach (var w in weldPorts)
+                {
+                    //Skip ourselves
+                    if (thisPart == w || thisPart == w.parent || w.children.Contains(thisPart))
+                        addPart = false;
+                }
+
+                if(addPart)
+                    weldPorts.Add(thisPart);
+            }
+            //Now go in reverse, start exploding!  We'll end with this part.
+            for (int i = weldPorts.Count; i -- > 0;)
+            {
+                var dp = weldPorts[i].FindModuleImplementing<ModuleWeldablePort>();
+                dp.MergeParts(true,false);
+            }
+        }
+
+        [KSPField(guiName = "Port Force", isPersistant = true, guiActive = true, guiActiveEditor = false), UI_FloatRange(stepIncrement = 0.5f, maxValue = 20f, minValue = 0f)]
         public float portForce = 2;
 
-        [KSPField(guiName = "Port Torque", isPersistant = true, guiActive = true, guiActiveEditor = false), UI_FloatRange(stepIncrement = 0.5f, maxValue = 50, minValue = 0f)]
+        [KSPField(guiName = "Port Torque", isPersistant = true, guiActive = true, guiActiveEditor = false), UI_FloatRange(stepIncrement = 0.5f, maxValue = 20, minValue = 0f)]
         public float portTorque = 2;
 
-        [KSPField(guiName = "Port Roll", isPersistant = true, guiActive = true, guiActiveEditor = false), UI_FloatRange(stepIncrement = 0.5f, maxValue = 50, minValue = 0f)]
-        public float portRoll = 2;
+        [KSPField(guiName = "Port Roll", isPersistant = true, guiActive = true, guiActiveEditor = false), UI_FloatRange(stepIncrement = 0.5f, maxValue = 20, minValue = 0f)]
+        public float portRoll = 0;
 
-        [KSPField(guiName = "Port Range", isPersistant = true, guiActive = true, guiActiveEditor = false), UI_FloatRange(stepIncrement = 0.1f, maxValue = 20f, minValue = 0f)]
+        [KSPField(guiName = "Port Range", isPersistant = true, guiActive = true, guiActiveEditor = false), UI_FloatRange(stepIncrement = 0.1f, maxValue = 5f, minValue = 0f)]
         public float portRange = 0.5f;
 
-        [KSPField(guiName = "Angle Snap", isPersistant = true, guiActive = true, guiActiveEditor = false), UI_FloatRange(stepIncrement = 15f, maxValue = 180f, minValue = 0f)]
-        public float portSnap = 90f;
+        [KSPField(guiName = "Angle", isPersistant = true, guiActive = true, guiActiveEditor = false), UI_FloatRange(stepIncrement = 15f, maxValue = 180f, minValue = 0f)]
+        public float portAngle = 0f;
 
+        [KSPField(guiName = "Snap", isPersistant = true, guiActive = true, guiActiveEditor = false), UI_Toggle(disabledText = "Off", enabledText = "On")]
+        public bool portSnap = true;
 
         private ModuleDockingNode dock;
 
-        public override void OnStart(StartState state)
+        public void Start()
         {
             if (!HighLogic.LoadedSceneIsFlight)
                 return;
@@ -63,14 +101,21 @@ namespace Konstruction
             }
         }
 
-        public override void OnUpdate()
+        public void Update()
         {
+            if (HighLogic.LoadedSceneIsEditor)
+                return;
+
             dock.acquireForce = portForce;
             dock.acquireTorque = portTorque;
             dock.acquireTorqueRoll = portRoll;
             dock.acquireRange = portRange;
-            dock.snapOffset = portSnap;
-            dock.snapRotation = !(Math.Abs(portSnap) < 0.01f);
+            dock.snapOffset = portAngle;
+            if (portSnap)
+                dock.captureMinRollDot = 0.999f;
+            else
+                dock.captureMinRollDot = float.MinValue;
+            dock.snapRotation = portSnap;
         }
 
         private void MergeParts(bool compress, bool fixRotation)
@@ -86,6 +131,42 @@ namespace Konstruction
                 return;
 
             PerformWeld(wData, compress, fixRotation);
+        }
+
+        private bool ResetRootPart()
+        {
+            if (vessel.parts.Count < 4)
+            {
+                ScreenMessages.PostScreenMessage("The vessel must have at least four parts to perform welding!");
+                return false;
+            }
+
+            var potParts = new List<Part>();
+
+            var count = part.children.Count;
+            for (int i = 0; i < count; ++i)
+            {
+                potParts.Add(part.children[i]);
+                potParts.AddRange(part.children[i].children);
+            }
+
+            //Now roll through the potParts and find our match.  This covers
+            //both children and grandchildren... so we had better be able to find a part!
+
+            var pCount = potParts.Count;
+            for (int i = 0; i < pCount; ++i)
+            {
+                var c = potParts[i];
+                //Can't be another weldable port...
+                if (c.FindModuleImplementing<ModuleWeldablePort>() != null)
+                    continue;
+
+                //Winner!  This is our new root
+                c.SetHierarchyRoot(vessel.rootPart);
+                return true;
+            }
+            //No luck...
+            return false;
         }
 
         private bool IsWeldablePort(Part p)
@@ -216,9 +297,9 @@ namespace Konstruction
         {
             var offset = Quaternion.Inverse(wData.DockingPortA.transform.localRotation)
                 * wData.DockingPortB.transform.localRotation;
-            var oAngle = offset.eulerAngles;
+            var oAngle = offset.eulerAngles;           
             //Add a 180 x-flip.
-            return new Vector3(CorrectAngle(oAngle.x - 180f), oAngle.y, oAngle.z);
+            return new Vector3(oAngle.x, oAngle.y, CorrectAngle(oAngle.z - 180));
         }
 
         private float CorrectAngle(float angle )
