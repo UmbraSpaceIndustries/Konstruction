@@ -11,4 +11,3 @@ E:\Dropbox\KSP_KSPTV\GameData\UmbraSpaceIndustries\Konstruction\Konstruction.pdb
 E:\Dropbox\USI-GIT\Konstruction\Source\Konstruction\Konstruction\obj\Debug\Konstruction.csprojResolveAssemblyReference.cache
 E:\Dropbox\USI-GIT\Konstruction\Source\Konstruction\Konstruction\obj\Debug\Konstruction.dll
 E:\Dropbox\USI-GIT\Konstruction\Source\Konstruction\Konstruction\obj\Debug\Konstruction.pdb
-D:\Dropbox\USI-GIT\Konstruction\Source\Konstruction\Konstruction\obj\Debug\Konstruction.csprojResolveAssemblyReference.cache
