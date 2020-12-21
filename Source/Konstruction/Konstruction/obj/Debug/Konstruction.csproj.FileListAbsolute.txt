@@ -14,3 +14,9 @@ D:\Dropbox\USI-GIT\Konstruction\Source\Konstruction\Konstruction\obj\Debug\Konst
 E:\Dropbox\KSP_DEV\GameData\UmbraSpaceIndustries\Konstruction\Konstruction.dll
 E:\Dropbox\KSP_DEV\GameData\UmbraSpaceIndustries\Konstruction\Konstruction.pdb
 E:\Dropbox\USI-GIT\Konstruction\Source\Konstruction\Konstruction\obj\Debug\Konstruction.csproj.CoreCompileInputs.cache
+E:\Dropbox (Personal)\KSP_DEV\GameData\UmbraSpaceIndustries\Konstruction\Konstruction.dll
+E:\Dropbox (Personal)\KSP_DEV\GameData\UmbraSpaceIndustries\Konstruction\Konstruction.pdb
+E:\Dropbox (Personal)\USI-GIT\Konstruction\Source\Konstruction\Konstruction\obj\Debug\Konstruction.csprojAssemblyReference.cache
+E:\Dropbox (Personal)\USI-GIT\Konstruction\Source\Konstruction\Konstruction\obj\Debug\Konstruction.csproj.CoreCompileInputs.cache
+E:\Dropbox (Personal)\USI-GIT\Konstruction\Source\Konstruction\Konstruction\obj\Debug\Konstruction.dll
+E:\Dropbox (Personal)\USI-GIT\Konstruction\Source\Konstruction\Konstruction\obj\Debug\Konstruction.pdb
