@@ -92,6 +92,8 @@
     <Compile Include="ModuleFlexiLegController.cs" />
     <Compile Include="ModuleGrippyWheel.cs" />
     <Compile Include="ModuleGroundAnchor.cs" />
+    <Compile Include="ModuleKonstructionForeman.cs" />
+    <Compile Include="ModuleKonstructionHelper.cs" />
     <Compile Include="ModuleMagneticNode.cs" />
     <Compile Include="ModulePiston.cs" />
     <Compile Include="ModuleServo.cs" />

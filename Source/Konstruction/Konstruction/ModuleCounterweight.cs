@@ -25,7 +25,7 @@ namespace Konstruction
 
         public override void OnStart(StartState state)
         {
-            res = part.Resources[0];
+             res = part.Resources[0];
             if (Math.Abs(res.amount - res.maxAmount) < ResourceUtilities.FLOAT_TOLERANCE)
             {
                 ToggleLoadBallast(false);
