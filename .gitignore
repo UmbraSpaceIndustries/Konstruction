@@ -1,1 +1,5 @@
 *.zip
+Source/Konstruction/Konstruction/obj/*
+Source/Konstruction/KerbalFabricator/obj/*
+Source/Konstruction/KerbalFabricator/bin/*
+Source/Konstruction/.vs/*
