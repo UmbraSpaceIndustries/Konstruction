@@ -14,15 +14,22 @@ namespace KerbalFabricator
         public float VolumeAvailable;
     }
 
+    public struct PartScrollbarData
+    {
+        public string partTitle;
+        public string partName;
+    }
+
     [KSPAddon(KSPAddon.Startup.Flight, false)]
     public class FabricationMonitor : MonoBehaviour
     {
         private ApplicationLauncherButton fabButton;
-        private Rect _windowPosition = new Rect(300, 60, 830, 400);
+        private Rect _windowPosition = new Rect(300, 60, 950, 600);
         private GUIStyle _windowStyle;
         private GUIStyle _labelStyle;
         private GUIStyle _buttonStyle;
         private GUIStyle _scrollStyle;
+        private GUIStyle _centeredLabelStyle;
         private Vector2 scrollPos = Vector2.zero;
         private bool _hasInitStyles = false;
         private bool windowVisible;
@@ -30,8 +37,13 @@ namespace KerbalFabricator
         private static IEnumerable<AvailablePart> _aParts;
         private static IEnumerable<Part> _vParts;
         private static List<string> _cckTags;
+        private static List<PartScrollbarData> catParts;
         private static Guid _curVesselId;
         private string currentCat = "";
+        private PartScrollbarData currentItem;
+        private Texture gearTexture;
+        private Texture boxTexture;
+        private int progressBar;
 
         public IEnumerable<Part> VesselInventoryParts
         {
@@ -78,12 +90,19 @@ namespace KerbalFabricator
 
         void Awake()
         {
+            this.fabButton = ApplicationLauncher.Instance.AddModApplication(GuiOn, GuiOff, null, null, null, null,
+                ApplicationLauncher.AppScenes.ALWAYS, LoadTexture("GearWrench.png"));
+            gearTexture = LoadTexture("Gears.png");
+            boxTexture = LoadTexture("Crate.png");
+        }
+
+        private Texture2D LoadTexture(string name)
+        {
             var texture = new Texture2D(36, 36, TextureFormat.RGBA32, false);
-            var textureFile = Path.Combine(Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location), "GearWrench.png");
+            var textureFile = Path.Combine(Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location), name);
             print("Loading " + textureFile);
             texture.LoadImage(File.ReadAllBytes(textureFile));
-            this.fabButton = ApplicationLauncher.Instance.AddModApplication(GuiOn, GuiOff, null, null, null, null,
-                ApplicationLauncher.AppScenes.ALWAYS, texture);
+            return texture;
         }
 
         private void GuiOn()
@@ -126,7 +145,7 @@ namespace KerbalFabricator
 
         private void Ondraw()
         {
-            _windowPosition = GUILayout.Window(10, _windowPosition, OnWindow, "Fabrication Controller", _windowStyle);
+            _windowPosition = GUILayout.Window(10, _windowPosition, OnWindow, "KonFabricator Control Panel", _windowStyle);
         }
 
         private void OnWindow(int windowId)
@@ -220,11 +239,12 @@ namespace KerbalFabricator
         private void GenerateWindow()
         {
             GUILayout.BeginVertical();
-            //scrollPos = GUILayout.BeginScrollView(scrollPos, _scrollStyle, GUILayout.Width(810), GUILayout.Height(350));
-            //GUILayout.BeginVertical();
 
             try
             {
+                //*****************
+                //*   SETUP
+                //*****************
                 //Calculate current values
                 float invVolume = 0f;
                 float invMass = 0f;
@@ -255,6 +275,10 @@ namespace KerbalFabricator
                     printMass += plist.Sum(x => x.massLimit);
                 }
 
+
+                //*****************
+                //*   HEADER
+                //*****************
                 GUILayout.BeginHorizontal();
                 GUILayout.Label(String.Format("<color=#ffd900>Printer Capacity:</color>"), _labelStyle, GUILayout.Width(120));
                 GUILayout.Label(String.Format("<color=#FFFFFF>{0} L/{1} t</color>", printVolume,printMass), _labelStyle, GUILayout.Width(100));
@@ -262,214 +286,98 @@ namespace KerbalFabricator
                 GUILayout.Label(String.Format("<color=#ffd900>Inventory Capacity:</color>"), _labelStyle, GUILayout.Width(120));
                 GUILayout.Label(String.Format("<color=#FFFFFF>{0} L/{1} t</color>", invVolume,invMass), _labelStyle, GUILayout.Width(100));
                 GUILayout.Label(String.Format("", 30), _labelStyle, GUILayout.Width(50));
-                GUILayout.Label(String.Format("<color=#ffd900>Construction Credits:</color>"), _labelStyle, GUILayout.Width(120));
+                GUILayout.Label(String.Format("<color=#ffd900>Construction Credits:</color>"), _labelStyle, GUILayout.Width(140));
                 GUILayout.Label(String.Format("<color=#FFFFFF>{0}</color>", credits), _labelStyle, GUILayout.Width(100));
                 GUILayout.Label(String.Format("", 30), _labelStyle, GUILayout.Width(50));
+                GUILayout.EndHorizontal();
 
 
+                //*********************
+                //*   MAIN WORK AREA
+                //*********************
+                GUILayout.BeginHorizontal();
                 List<string> cats = GetInventoryCategories();
                 cats.AddRange(GetCCKCategories());
+                cats.Sort();
+                if (catParts == null)
+                    catParts = new List<PartScrollbarData>();
 
-                //Category Buttons
-                for(int i = 0; i < cats.Count; ++i)
+
+                //*****************
+                //*   CATEGORIES
+                //*****************
+                GUILayout.BeginVertical();
+                GUILayout.Label(String.Format("<color=#ffd900>Categories</color>"), _labelStyle, GUILayout.Width(120));
+                scrollPos = GUILayout.BeginScrollView(scrollPos, _scrollStyle, GUILayout.Width(200), GUILayout.Height(450));
+
+                for (int i = 0; i < cats.Count; ++i)
                 {
                     var cat = cats[i];
-                    if(i % 8 == 0)
-                    {
-                        GUILayout.EndHorizontal();
-                        GUILayout.BeginHorizontal();
-                    }
                     var catCol = "ffffff";
                     if (currentCat == cat)
                     {
                         catCol = "ffd900";
                     }
-                    if (GUILayout.Button(String.Format("<color=#{0}>{1}</color>",catCol, cat), GUILayout.Width(95)))
+                    if (GUILayout.Button(String.Format("<color=#{0}>{1}</color>", catCol, cat, "Label"), _labelStyle, GUILayout.Width(170)))
                     {
                         currentCat = cat;
+                        GetPartsForCategory(cat);
                     }
-                        
                 }
+                GUILayout.EndScrollView();
+                GUILayout.EndVertical();
+
+
+                //*****************
+                //*   PARTS
+                //*****************
+                GUILayout.BeginVertical();
+                GUILayout.Label(String.Format("<color=#ffd900>Parts</color>"), _labelStyle, GUILayout.Width(120));
+                scrollPos = GUILayout.BeginScrollView(scrollPos, _scrollStyle, GUILayout.Width(400), GUILayout.Height(450));
+
+                foreach(var item in catParts.OrderBy(x=>x.partTitle))
+                {
+                    var itemCol = "ffffff";
+                    if (currentItem.partTitle == item.partTitle)
+                    {
+                        itemCol = "ffd900";
+                    }
+                    if (GUILayout.Button(String.Format("<color=#{0}>{1}</color>", itemCol, item.partTitle, "Label"), _labelStyle, GUILayout.Width(370)))
+                    {
+                        currentItem = item;
+                    }
+                }
+                GUILayout.EndScrollView();
+                GUILayout.EndVertical();
+
+                //*****************
+                //*   ACTION WINDOW
+                //*****************
+                //   Part:   MyPartName
+                //   Mass:   0.05 t
+                //   Volume: 124 L
+                //   Cost:   1500 Kc
+                //   
+                //   [ BUILD IT! ]
+                //
+                //   * =======  o
+                GUILayout.BeginVertical();
+
+                if (GUILayout.Button("Start KonFabricator!" + currentItem.partName, GUILayout.Width(200), GUILayout.Height(30)))
+                    progressBar = 0; //TODO
+
+                GUILayout.BeginHorizontal();
+                GUILayout.Box(gearTexture);
+                GUILayout.Label(String.Format("READY"), _centeredLabelStyle, GUILayout.Width(100));
+                GUILayout.Box(boxTexture);
                 GUILayout.EndHorizontal();
 
-                //GUILayout.BeginHorizontal();
-                //if (GUILayout.Button("Build a Thing!", GUILayout.Width(120)))
-                //    BuildAThing("Ranger.AnchorHub");
-                //GUILayout.EndHorizontal();
+                GUILayout.EndVertical();
 
-
-
-                //var numServos = 0;
-                //foreach (var p in GetParts())
-                //{
-                //    var servos = p.FindModulesImplementing<ModuleServo>();
-                //    if (servos.Any())
-                //    {
-                //        numServos++;
-                //        bool setPos = false;
-                //        int setGoalVal = -1;
-                //        bool stopAll = false;
-                //        float speedMult = 1f;
-
-                //        if (showServo.Count < numServos)
-                //            showServo.Add(true);
-
-                //        GUILayout.BeginHorizontal();
-
-                //        if (showServo[numServos - 1])
-                //        {
-                //            if (GUILayout.Button("-", GUILayout.Width(35)))
-                //                showServo[numServos - 1] = false;
-                //        }
-                //        else
-                //        {
-                //            if (GUILayout.Button("+", GUILayout.Width(35)))
-                //                showServo[numServos - 1] = true;
-                //        }
-
-
-                //        GUILayout.Label(String.Format("<color=#FFFFFF>[{0}] {1}</color>", numServos,p.partInfo.title), _labelStyle, GUILayout.Width(230));
-
-                //        if (p.HighlightActive)
-                //        {
-                //            if (GUILayout.Button("-H", GUILayout.Width(35)))
-                //            {
-                //                p.highlightColor = Color.magenta;
-                //                p.HighlightActive = false;
-                //                p.Highlight(false);
-                //            }
-                //        }
-                //        else
-                //        {
-                //            if (GUILayout.Button("+H", GUILayout.Width(35)))
-                //            {
-                //                p.highlightColor = Color.magenta;
-                //                p.HighlightActive = true;
-                //                p.Highlight(true);
-                //            }
-                //        }
-
-
-                //        var sGroup = p.FindModuleImplementing<ModuleServoGroup>();
-                //        if (sGroup != null)
-                //        {
-                //            if (sGroup.GroupState == 0)
-                //            {
-                //                if (GUILayout.Button("Group: None", GUILayout.Width(140)))
-                //                    sGroup.GroupState++;
-                //            }
-                //            else if (sGroup.GroupState == 1)
-                //            {
-                //                if (GUILayout.Button("Group: Slave", GUILayout.Width(140)))
-                //                    sGroup.GroupState++;
-                //            }
-                //            else
-                //            {
-                //                if (GUILayout.Button("Group: Master", GUILayout.Width(140)))
-                //                    sGroup.GroupState = 0;
-                //            }
-
-                //            if (sGroup.GroupID < 6)
-                //            {
-                //                if (GUILayout.Button("ID: " + sGroup.GroupID, GUILayout.Width(70)))
-                //                    sGroup.GroupID++;
-                //            }
-                //            else
-                //            {
-                //                if (GUILayout.Button("ID: " + sGroup.GroupID, GUILayout.Width(70)))
-                //                    sGroup.GroupID = 0;
-                //            }
-                //        }
-
-
-                //        if (showServo[numServos - 1])
-                //        {
-                //            if (GUILayout.Button("All Free", GUILayout.Width(70)))
-                //                setGoalVal = 0;
-                //            if (GUILayout.Button("All Goal", GUILayout.Width(70)))
-                //                setGoalVal = 1;
-                //            if (GUILayout.Button("All Stop", GUILayout.Width(70)))
-                //                stopAll = true;
-
-                //        }
-
-
-
-
-                //        GUILayout.EndHorizontal();
-
-                //        if (showServo[numServos - 1])
-                //        {
-                //            foreach (var servo in servos)
-                //            {
-                //                servo.ServoSpeed *= speedMult;
-
-                //                if (stopAll)
-                //                    servo.ServoSpeed = 0;
-                //                if (setGoalVal == 0)
-                //                    servo.MoveToGoal = false;
-                //                if (setGoalVal == 1)
-                //                    servo.MoveToGoal = true;
-                //                GUILayout.BeginHorizontal();
-                //                GUILayout.Label("", _labelStyle, GUILayout.Width(30));
-                //                GUILayout.Label(String.Format("{0}", servo.menuName), _labelStyle, GUILayout.Width(130));
-                //                var goal = GUILayout.TextField(servo.GoalString, 10, GUILayout.Width(50));
-                //                GUILayout.Label(String.Format("<color=#fce700>G: [{0}]</color>", servo.goalValue), _labelStyle, GUILayout.Width(80));
-                //                servo.GoalString = goal;
-                //                var tmp = 0f;
-                //                if (float.TryParse(goal, out tmp))
-                //                    servo.goalValue = tmp;
-                //                GUILayout.Label(String.Format("{0:0.00}", servo.DisplayPosition), _labelStyle, GUILayout.Width(50));
-                //                if (GUILayout.Button("<->", GUILayout.Width(35)))
-                //                    servo.ServoSpeed *= -1;
-                //                if (GUILayout.Button("-0-", GUILayout.Width(35)))
-                //                    servo.ServoSpeed = 0;
-                //                if(servo.MoveToGoal)
-                //                {
-                //                    if (GUILayout.Button("-F-", GUILayout.Width(35)))
-                //                        servo.MoveToGoal = false;
-                //                }
-                //                else
-                //                {
-                //                    if (GUILayout.Button("-G-", GUILayout.Width(35)))
-                //                        servo.MoveToGoal = true;
-                //                }
-                //                GUILayout.Label("", _labelStyle, GUILayout.Width(30));
-
-                //                if (GUILayout.Button("-10", GUILayout.Width(35)))
-                //                    servo.ServoSpeed -= 10;
-                //                if (GUILayout.Button("-1", GUILayout.Width(35)))
-                //                    servo.ServoSpeed -= 1;
-
-                //                if (servo.GroupBehavior == 0)
-                //                {
-                //                    if (GUILayout.Button("+", GUILayout.Width(25)))
-                //                        servo.GroupBehavior += 1;
-                //                }
-                //                else if (servo.GroupBehavior == 1)
-                //                {
-                //                    if (GUILayout.Button("-", GUILayout.Width(25)))
-                //                        servo.GroupBehavior += 1;
-                //                }
-                //                else
-                //                {
-                //                    if (GUILayout.Button("o", GUILayout.Width(25)))
-                //                        servo.ServoSpeed = 0;
-                //                }
-
-
-                //                GUILayout.Label("", _labelStyle, GUILayout.Width(5));
-                //                GUILayout.Label(String.Format("<color=#FFD900>{0:0}</color>", servo.ServoSpeed), _labelStyle, GUILayout.Width(40));
-                //                GUILayout.Label("", _labelStyle, GUILayout.Width(5));
-                //                if (GUILayout.Button("+1", GUILayout.Width(35)))
-                //                    servo.ServoSpeed += 1;
-                //                if (GUILayout.Button("+10", GUILayout.Width(35)))
-                //                    servo.ServoSpeed += 10;
-                //                GUILayout.EndHorizontal();
-                //            }
-                //        }
-                //    }
-                //}
+                //*********************
+                //*  CLEAN UP
+                //*********************
+                GUILayout.EndHorizontal();
             }
             catch (Exception ex)
             {
@@ -477,10 +385,25 @@ namespace KerbalFabricator
             }
             finally
             {
-                //GUILayout.EndVertical();
-                //GUILayout.EndScrollView();
                 GUILayout.EndVertical();
                 GUI.DragWindow();
+            }
+        }
+
+
+        private void GetPartsForCategory(string catName)
+        {
+            var cParts = AllCargoParts
+                .Where(x => x.category.ToStringCached() == catName ||
+                (x.tags.ToLower().Contains("cck-" + catName)));
+
+            catParts = new List<PartScrollbarData>();
+            foreach(var p in cParts)
+            {
+                PartScrollbarData pd;
+                pd.partName = p.name;
+                pd.partTitle = p.title;
+                catParts.Add(pd);
             }
         }
 
@@ -496,9 +419,11 @@ namespace KerbalFabricator
         private void InitStyles()
         {
             _windowStyle = new GUIStyle(HighLogic.Skin.window);
-            _windowStyle.fixedWidth = 830f;
-            _windowStyle.fixedHeight = 400f;
+            _windowStyle.fixedWidth = 950f;
+            _windowStyle.fixedHeight = 600f;
             _labelStyle = new GUIStyle(HighLogic.Skin.label);
+            _centeredLabelStyle = new GUIStyle(HighLogic.Skin.label);
+            _centeredLabelStyle.alignment = TextAnchor.MiddleCenter;
             _buttonStyle = new GUIStyle(HighLogic.Skin.button);
             _scrollStyle = new GUIStyle(HighLogic.Skin.scrollView);
             _hasInitStyles = true;
