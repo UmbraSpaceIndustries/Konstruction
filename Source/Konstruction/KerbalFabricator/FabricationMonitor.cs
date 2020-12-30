@@ -30,7 +30,8 @@ namespace KerbalFabricator
         private GUIStyle _buttonStyle;
         private GUIStyle _scrollStyle;
         private GUIStyle _centeredLabelStyle;
-        private Vector2 scrollPos = Vector2.zero;
+        private Vector2 scrollPosCat = Vector2.zero;
+        private Vector2 scrollPosPart = Vector2.zero;
         private bool _hasInitStyles = false;
         private bool windowVisible;
         public static bool renderDisplay = false;
@@ -308,7 +309,7 @@ namespace KerbalFabricator
                 //*****************
                 GUILayout.BeginVertical();
                 GUILayout.Label(String.Format("<color=#ffd900>Categories</color>"), _labelStyle, GUILayout.Width(120));
-                scrollPos = GUILayout.BeginScrollView(scrollPos, _scrollStyle, GUILayout.Width(200), GUILayout.Height(450));
+                scrollPosCat = GUILayout.BeginScrollView(scrollPosCat, _scrollStyle, GUILayout.Width(160), GUILayout.Height(450));
 
                 for (int i = 0; i < cats.Count; ++i)
                 {
@@ -318,7 +319,7 @@ namespace KerbalFabricator
                     {
                         catCol = "ffd900";
                     }
-                    if (GUILayout.Button(String.Format("<color=#{0}>{1}</color>", catCol, cat, "Label"), _labelStyle, GUILayout.Width(170)))
+                    if (GUILayout.Button(String.Format("<color=#{0}>{1}</color>", catCol, cat, "Label"), _labelStyle, GUILayout.Width(120)))
                     {
                         currentCat = cat;
                         GetPartsForCategory(cat);
@@ -333,7 +334,7 @@ namespace KerbalFabricator
                 //*****************
                 GUILayout.BeginVertical();
                 GUILayout.Label(String.Format("<color=#ffd900>Parts</color>"), _labelStyle, GUILayout.Width(120));
-                scrollPos = GUILayout.BeginScrollView(scrollPos, _scrollStyle, GUILayout.Width(400), GUILayout.Height(450));
+                scrollPosPart = GUILayout.BeginScrollView(scrollPosPart, _scrollStyle, GUILayout.Width(400), GUILayout.Height(450));
 
                 foreach(var item in catParts.OrderBy(x=>x.partTitle))
                 {
@@ -342,7 +343,7 @@ namespace KerbalFabricator
                     {
                         itemCol = "ffd900";
                     }
-                    if (GUILayout.Button(String.Format("<color=#{0}>{1}</color>", itemCol, item.partTitle, "Label"), _labelStyle, GUILayout.Width(370)))
+                    if (GUILayout.Button(String.Format("<color=#{0}>{1}</color>", itemCol, item.partTitle, "Label"), _labelStyle, GUILayout.Width(360)))
                     {
                         currentItem = item;
                     }
@@ -362,6 +363,12 @@ namespace KerbalFabricator
                 //
                 //   * =======  o
                 GUILayout.BeginVertical();
+                GUILayout.Label(String.Format(" "), _labelStyle, GUILayout.Width(120)); //Spacer
+                
+
+
+
+
 
                 if (GUILayout.Button("Start KonFabricator!" + currentItem.partName, GUILayout.Width(200), GUILayout.Height(30)))
                     progressBar = 0; //TODO
