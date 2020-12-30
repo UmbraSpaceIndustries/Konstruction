@@ -44,7 +44,36 @@ namespace KerbalFabricator
         private PartScrollbarData currentItem;
         private Texture gearTexture;
         private Texture boxTexture;
-        private int progressBar;
+        private Texture thumbTexture;
+        private AvailablePart currentPart;
+        public static Dictionary<string, string> PartTextureCache;
+
+        private void ResetThumbTexture()
+        {
+            if (PartTextureCache == null)
+                PartTextureCache = new Dictionary<string, string>();
+
+            //Is our thumb in cache?
+            if(!PartTextureCache.ContainsKey(currentPart.name))
+            {
+                var path = Path.GetFullPath(Path.Combine(KSPUtil.ApplicationRootPath, "GameData"));
+                
+                var files = Directory.GetFiles(path, currentPart.name + "_icon*.png", SearchOption.AllDirectories);
+                var thumbFile = files.Where(f => f.Contains("@thumbs")).FirstOrDefault();
+                PartTextureCache.Add(currentPart.name, thumbFile);
+            }
+
+            var thumb = PartTextureCache[currentPart.name];
+            if(!String.IsNullOrEmpty(thumb))
+            {
+                thumbTexture = LoadTexture(thumb);
+            }
+            else
+            {
+                thumbTexture = gearTexture;
+            }
+        }
+       
 
         public IEnumerable<Part> VesselInventoryParts
         {
@@ -82,7 +111,10 @@ namespace KerbalFabricator
                     var tag = part.tags.ToLower().Split(' ').Where(t=>t.StartsWith("cck-")).FirstOrDefault();
                     if (String.IsNullOrEmpty(tag))
                         continue;
-                    _cckTags.Add(tag.Substring(5));
+
+                    var newTag = tag.Substring(4);
+                    if (!_cckTags.Contains(newTag))
+                    _cckTags.Add(newTag);
                 }
             }
             return _cckTags;
@@ -91,18 +123,21 @@ namespace KerbalFabricator
 
         void Awake()
         {
+            var path = Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location);
             this.fabButton = ApplicationLauncher.Instance.AddModApplication(GuiOn, GuiOff, null, null, null, null,
-                ApplicationLauncher.AppScenes.ALWAYS, LoadTexture("GearWrench.png"));
-            gearTexture = LoadTexture("Gears.png");
-            boxTexture = LoadTexture("Crate.png");
+                ApplicationLauncher.AppScenes.ALWAYS, LoadTexture(Path.Combine(path, "GearWrench.png")));
+
+            gearTexture = LoadTexture(Path.Combine(path, "Gears.png"));
+            thumbTexture = LoadTexture(Path.Combine(path, "Gears.png"));
+            boxTexture = LoadTexture(Path.Combine(path, "Crate.png"));
         }
 
-        private Texture2D LoadTexture(string name)
+
+        private Texture2D LoadTexture(string fullName)
         {
             var texture = new Texture2D(36, 36, TextureFormat.RGBA32, false);
-            var textureFile = Path.Combine(Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location), name);
-            print("Loading " + textureFile);
-            texture.LoadImage(File.ReadAllBytes(textureFile));
+            print("Loading " + fullName);
+            texture.LoadImage(File.ReadAllBytes(fullName));
             return texture;
         }
 
@@ -160,11 +195,11 @@ namespace KerbalFabricator
             return hex;
         }
 
-        private Part GetPartByName(string partName)
+        private AvailablePart GetPartByName(string partName)
         {
             var p = AllCargoParts.Where(x => x.name == partName).FirstOrDefault();
             if (p != null)
-                return p.partPrefab;
+                return p;
             return null;
         }
 
@@ -174,15 +209,16 @@ namespace KerbalFabricator
             if (iPart == null)
                 return;
 
-            var modCP = iPart.FindModuleImplementing<ModuleCargoPart>();
+            var modCP = iPart.partPrefab.FindModuleImplementing<ModuleCargoPart>();
 
             foreach (var p in VesselInventoryParts)
             {
                 var inv = p.FindModuleImplementing<ModuleInventoryPart>();
+
                 if(inv.TotalEmptySlots() > 0)
                 {
                     var con = GetCapacity(inv);
-                    if (con.MassAvailable < iPart.mass)
+                    if (con.MassAvailable < iPart.partPrefab.mass)
                         continue;
 
                     if (con.VolumeAvailable >= modCP.packedVolume)
@@ -191,7 +227,7 @@ namespace KerbalFabricator
                         {
                             if (inv.IsSlotEmpty(z))
                             {
-                                inv.StoreCargoPartAtSlot(iPart, z);
+                                inv.StoreCargoPartAtSlot(iPart.partPrefab, z);
                                 return;
                             }
                         }
@@ -209,9 +245,9 @@ namespace KerbalFabricator
                 if (!inv.IsSlotEmpty(z))
                 {
                     var invPart = GetPartByName(inv.storedParts[z].partName);
-                    totVol += invPart.FindModuleImplementing<ModuleCargoPart>().packedVolume;
-                    totMass += invPart.mass;
-                    totMass += invPart.resourceMass;
+                    totVol += invPart.partPrefab.FindModuleImplementing<ModuleCargoPart>().packedVolume;
+                    totMass += invPart.partPrefab.mass;
+                    totMass += invPart.partPrefab.resourceMass;
                 }
             }
 
@@ -237,6 +273,12 @@ namespace KerbalFabricator
             return cats;
         }
 
+        private AvailablePart LoadPart(string partName)
+        {
+            var p = AllCargoParts.Where(x => x.name == partName).Single();
+            return p;
+        }
+
         private void GenerateWindow()
         {
             GUILayout.BeginVertical();
@@ -252,7 +294,6 @@ namespace KerbalFabricator
                 float printVolume = 0f;
                 float printMass = 0f;
                 double credits = 0;
-
 
                 foreach (var p in FlightGlobals.ActiveVessel.parts)
                 {
@@ -303,6 +344,14 @@ namespace KerbalFabricator
                 if (catParts == null)
                     catParts = new List<PartScrollbarData>();
 
+                if (String.IsNullOrEmpty(currentCat))
+                {
+                    currentCat = cats[0];
+                    GetPartsForCategory(currentCat);
+                    currentItem = catParts[0];
+                    currentPart = GetPartByName(currentItem.partName);
+                }
+
 
                 //*****************
                 //*   CATEGORIES
@@ -334,7 +383,7 @@ namespace KerbalFabricator
                 //*****************
                 GUILayout.BeginVertical();
                 GUILayout.Label(String.Format("<color=#ffd900>Parts</color>"), _labelStyle, GUILayout.Width(120));
-                scrollPosPart = GUILayout.BeginScrollView(scrollPosPart, _scrollStyle, GUILayout.Width(400), GUILayout.Height(450));
+                scrollPosPart = GUILayout.BeginScrollView(scrollPosPart, _scrollStyle, GUILayout.Width(380), GUILayout.Height(450));
 
                 foreach(var item in catParts.OrderBy(x=>x.partTitle))
                 {
@@ -343,9 +392,11 @@ namespace KerbalFabricator
                     {
                         itemCol = "ffd900";
                     }
-                    if (GUILayout.Button(String.Format("<color=#{0}>{1}</color>", itemCol, item.partTitle, "Label"), _labelStyle, GUILayout.Width(360)))
+                    if (GUILayout.Button(String.Format("<color=#{0}>{1}</color>", itemCol, item.partTitle, "Label"), _labelStyle, GUILayout.Width(340)))
                     {
                         currentItem = item;
+                        currentPart = GetPartByName(currentItem.partName);
+                        ResetThumbTexture();
                     }
                 }
                 GUILayout.EndScrollView();
@@ -364,23 +415,40 @@ namespace KerbalFabricator
                 //   * =======  o
                 GUILayout.BeginVertical();
                 GUILayout.Label(String.Format(" "), _labelStyle, GUILayout.Width(120)); //Spacer
-                
 
+                if (!String.IsNullOrEmpty(currentItem.partName))
+                {
+                    GUILayout.BeginHorizontal();
+                    GUILayout.Label(String.Format(currentItem.partTitle), _labelStyle, GUILayout.Width(300));
+                    GUILayout.EndHorizontal();
 
+                    GUILayout.BeginHorizontal();
+                    GUILayout.Label(String.Format("<color=#ffd900>Mass:</color>"), _labelStyle, GUILayout.Width(50));
+                    GUILayout.Label(String.Format("{0} t",currentPart.partPrefab.mass - currentPart.partPrefab.resourceMass), _labelStyle, GUILayout.Width(100));
+                    GUILayout.EndHorizontal();
 
+                    GUILayout.BeginHorizontal();
+                    GUILayout.Label(String.Format("<color=#ffd900>Volume:</color>"), _labelStyle, GUILayout.Width(50));
+                    GUILayout.Label(String.Format("{0} l", currentPart.partPrefab.FindModuleImplementing<ModuleCargoPart>().packedVolume), _labelStyle, GUILayout.Width(100));
+                    GUILayout.EndHorizontal();
 
+                    GUILayout.BeginHorizontal();
+                    GUILayout.Label(String.Format("<color=#ffd900>Cost:</color>"), _labelStyle, GUILayout.Width(50));
+                    GUILayout.Label(String.Format("{0} Kc", currentPart.partPrefab.mass * 100), _labelStyle, GUILayout.Width(100));
+                    GUILayout.EndHorizontal();
 
-                if (GUILayout.Button("Start KonFabricator!" + currentItem.partName, GUILayout.Width(200), GUILayout.Height(30)))
-                    progressBar = 0; //TODO
+                    GUILayout.Box(thumbTexture);
 
-                GUILayout.BeginHorizontal();
-                GUILayout.Box(gearTexture);
-                GUILayout.Label(String.Format("READY"), _centeredLabelStyle, GUILayout.Width(100));
-                GUILayout.Box(boxTexture);
-                GUILayout.EndHorizontal();
+                    if (GUILayout.Button("Start KonFabricator!", GUILayout.Width(200), GUILayout.Height(30)))
+                        BuildAThing(currentItem.partName);
 
-                GUILayout.EndVertical();
+                    //GUILayout.BeginHorizontal();
+                    //GUILayout.Label(String.Format("READY"), _centeredLabelStyle, GUILayout.Width(100));
+                    //GUILayout.Box(boxTexture);
+                    //GUILayout.EndHorizontal();
 
+                    GUILayout.EndVertical();
+                }
                 //*********************
                 //*  CLEAN UP
                 //*********************
