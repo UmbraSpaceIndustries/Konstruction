@@ -32,7 +32,7 @@ namespace Konstruction
         {
             var ret = true; 
             //First - We need an Engineer.
-            var hasEngineer = DoesVesselHaveEngineer();
+            var hasEngineer = DoesPartHaveEngineer();
             if (!hasEngineer)
             {
                 ScreenMessages.PostScreenMessage("Unable to commence Konstruction - Engineer not present in module", 5f, ScreenMessageStyle.UPPER_CENTER);
@@ -58,7 +58,7 @@ namespace Konstruction
             return ret;
         }
 
-        public bool DoesVesselHaveEngineer()
+        public bool DoesPartHaveEngineer()
         {
             var cCount = part.protoModuleCrew.Count;
             for (int i = 0; i < cCount; ++i)

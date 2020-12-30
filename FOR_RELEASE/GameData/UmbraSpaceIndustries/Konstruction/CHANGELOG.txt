@@ -1,3 +1,7 @@
+1.4.1 - TBD
+------------------
+Fixed Akita Seat CTT Placement
+
 1.4.0 - 2020.12.20
 ------------------
 KSP 1.11 Compatibility

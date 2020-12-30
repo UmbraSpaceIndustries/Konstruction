@@ -5,6 +5,7 @@ using System.Reflection;
 using UnityEngine;
 using KSP.UI.Screens;
 using System.Collections.Generic;
+using USITools;
 
 namespace KerbalFabricator
 {
@@ -18,6 +19,12 @@ namespace KerbalFabricator
     {
         public string partTitle;
         public string partName;
+    }
+
+    public struct CostData
+    {
+        public int MatKits;
+        public int SpecParts;
     }
 
     [KSPAddon(KSPAddon.Startup.Flight, false)]
@@ -35,19 +42,45 @@ namespace KerbalFabricator
         private bool _hasInitStyles = false;
         private bool windowVisible;
         public static bool renderDisplay = false;
-        private static IEnumerable<AvailablePart> _aParts;
-        private static IEnumerable<Part> _vParts;
+        private static List<AvailablePart> _aParts;
+        private static List<Part> _vParts;
         private static List<string> _cckTags;
         private static List<PartScrollbarData> catParts;
         private static Guid _curVesselId;
         private string currentCat = "";
         private PartScrollbarData currentItem;
-        private Texture gearTexture;
-        private Texture boxTexture;
+        private Texture nfTexture;
         private Texture thumbTexture;
         private AvailablePart currentPart;
         public static Dictionary<string, string> PartTextureCache;
 
+        public const int CONST_MATKIT_RATIO = 2;
+
+        private CostData GetPartCost(AvailablePart part)
+        {
+            CostData cost = new CostData();
+            //MatKits
+            var mk = PartResourceLibrary.Instance.resourceDefinitions["MaterialKits"];
+            cost.MatKits = (int) Math.Ceiling(part.partPrefab.mass * 2f / mk.density);
+
+            //SpecParts
+            var sp = PartResourceLibrary.Instance.resourceDefinitions["SpecializedParts"];
+            var mkCost = cost.MatKits * mk.unitCost;
+            var spCost = mkCost - part.cost;
+            if (spCost > 0)
+            {
+                cost.SpecParts = (int)Math.Ceiling(spCost / sp.unitCost);
+            }
+            return cost;
+        }
+
+        private string GetThumbFile()
+        {
+            var path = Path.GetFullPath(Path.Combine(KSPUtil.ApplicationRootPath, "GameData"));
+            var files = Directory.GetFiles(path, currentPart.name + "_icon*.png", SearchOption.AllDirectories);
+            var thumbFile = files.Where(f => f.Contains("@thumbs")).FirstOrDefault();
+            return thumbFile;
+        }
         private void ResetThumbTexture()
         {
             if (PartTextureCache == null)
@@ -56,10 +89,7 @@ namespace KerbalFabricator
             //Is our thumb in cache?
             if(!PartTextureCache.ContainsKey(currentPart.name))
             {
-                var path = Path.GetFullPath(Path.Combine(KSPUtil.ApplicationRootPath, "GameData"));
-                
-                var files = Directory.GetFiles(path, currentPart.name + "_icon*.png", SearchOption.AllDirectories);
-                var thumbFile = files.Where(f => f.Contains("@thumbs")).FirstOrDefault();
+                var thumbFile = GetThumbFile();
                 PartTextureCache.Add(currentPart.name, thumbFile);
             }
 
@@ -70,7 +100,7 @@ namespace KerbalFabricator
             }
             else
             {
-                thumbTexture = gearTexture;
+                thumbTexture = nfTexture;
             }
         }
        
@@ -82,7 +112,7 @@ namespace KerbalFabricator
                 if(_vParts == null || _curVesselId != FlightGlobals.ActiveVessel.id)
                 {
                     _curVesselId = FlightGlobals.ActiveVessel.id;
-                    _vParts = FlightGlobals.ActiveVessel.parts.Where(x=>x.HasModuleImplementing<ModuleInventoryPart>());
+                    _vParts = FlightGlobals.ActiveVessel.parts.Where(x=>x.HasModuleImplementing<ModuleInventoryPart>()).ToList();
                 }
                 return _vParts;
             }
@@ -95,7 +125,15 @@ namespace KerbalFabricator
                 if (_aParts == null)
                 {
                     _aParts = PartLoader.LoadedPartsList
-                        .Where(x => x.partPrefab.HasModuleImplementing<ModuleCargoPart>());
+                        .Where(x => x.partPrefab.HasModuleImplementing<ModuleCargoPart>()
+                       && x.TechHidden == false).ToList();
+                    for(int i = _aParts.Count; i-- > 0;)
+                    {
+                        var p = _aParts[i];
+                        var m = p.partPrefab.FindModuleImplementing<ModuleCargoPart>();
+                        if (m.packedVolume < 0)
+                            _aParts.RemoveAt(i);
+                    }
                 }
                 return _aParts;
             }
@@ -123,13 +161,15 @@ namespace KerbalFabricator
 
         void Awake()
         {
+            if (!HighLogic.LoadedSceneIsFlight)
+                GuiOff();
+
             var path = Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location);
             this.fabButton = ApplicationLauncher.Instance.AddModApplication(GuiOn, GuiOff, null, null, null, null,
                 ApplicationLauncher.AppScenes.ALWAYS, LoadTexture(Path.Combine(path, "GearWrench.png")));
 
-            gearTexture = LoadTexture(Path.Combine(path, "Gears.png"));
-            thumbTexture = LoadTexture(Path.Combine(path, "Gears.png"));
-            boxTexture = LoadTexture(Path.Combine(path, "Crate.png"));
+            nfTexture = LoadTexture(Path.Combine(path, "notfound.png"));
+            thumbTexture = LoadTexture(Path.Combine(path, "notfound.png"));
         }
 
 
@@ -203,11 +243,53 @@ namespace KerbalFabricator
             return null;
         }
 
-        private void BuildAThing(string name)
+        private bool IsPrinterAvailable(AvailablePart part, float mass, float volume)
+        {
+            var modCP = part.partPrefab.FindModuleImplementing<ModuleCargoPart>();
+            if (part.partPrefab.mass > mass)
+                return false;
+
+            if (modCP.packedVolume > volume)
+                return false;
+                
+            return true;
+        }
+
+
+        private bool IsSlotAvailable(AvailablePart part)
+        {
+            var modCP = part.partPrefab.FindModuleImplementing<ModuleCargoPart>();
+
+            foreach (var p in VesselInventoryParts)
+            {
+                var inv = p.FindModuleImplementing<ModuleInventoryPart>();
+
+                if (inv.TotalEmptySlots() > 0)
+                {
+                    var con = GetCapacity(inv);
+                    if (con.MassAvailable < part.partPrefab.mass)
+                        continue;
+
+                    if (con.VolumeAvailable >= modCP.packedVolume)
+                    {
+                        for (int z = 0; z < inv.InventorySlots; z++)
+                        {
+                            if (inv.IsSlotEmpty(z))
+                            {
+                                return true;
+                            }
+                        }
+                    }
+                }
+            }
+            return false;
+        }
+
+        private bool BuildAThing(string name)
         {
             var iPart = GetPartByName(name);
             if (iPart == null)
-                return;
+                return false;
 
             var modCP = iPart.partPrefab.FindModuleImplementing<ModuleCargoPart>();
 
@@ -227,13 +309,25 @@ namespace KerbalFabricator
                         {
                             if (inv.IsSlotEmpty(z))
                             {
+                                ConsumeResources(GetPartCost(iPart));
+                                foreach(var r in iPart.partPrefab.Resources)
+                                {
+                                    r.amount = 0;
+                                }
                                 inv.StoreCargoPartAtSlot(iPart.partPrefab, z);
-                                return;
+                                return true;
                             }
                         }
                     }
                 }
             }
+            return false;
+        }
+
+        private void ConsumeResources(CostData cost)
+        {
+            ConsumeResource("MaterialKits", cost.MatKits);
+            ConsumeResource("SpecializedParts", cost.SpecParts);
         }
 
         private InventoryConstraints GetCapacity(ModuleInventoryPart inv)
@@ -271,6 +365,69 @@ namespace KerbalFabricator
             var cats = new List<string>();
             cats.AddRange(AllCargoParts.Select(x => x.category.ToStringCached()).Distinct());
             return cats;
+        }
+
+        private bool ResourcesExist(string resName, double needed)
+        {
+            double foundAmount = GetResourceQty(resName);
+            return foundAmount >= needed;
+        }
+
+        private double GetResourceQty(string resName)
+        {
+            double foundAmount = 0;
+            var whpList = LogisticsTools.GetRegionalWarehouses(FlightGlobals.ActiveVessel, "USI_ModuleResourceWarehouse");
+            var count = whpList.Count;
+
+            for (int i = 0; i < count; ++i)
+            {
+                var whp = whpList[i];
+                if (whp.Modules.Contains("USI_ModuleResourceWarehouse"))
+                {
+                    var wh = whp.FindModuleImplementing<USI_ModuleResourceWarehouse>();
+                    if (!wh.localTransferEnabled)
+                        continue;
+                }
+                if (whp.Resources.Contains(resName))
+                {
+                    var res = whp.Resources[resName];
+                    foundAmount += res.amount;
+                }
+            }
+            return foundAmount;
+        }
+
+        private void ConsumeResource(string resName, double amtToTake)
+        {
+            double needed = amtToTake;
+            var whpList = LogisticsTools.GetRegionalWarehouses(FlightGlobals.ActiveVessel, "USI_ModuleResourceWarehouse");
+            var count = whpList.Count;
+
+            for (int i = 0; i < count; ++i)
+            {
+                var whp = whpList[i];
+                if (whp.Modules.Contains("USI_ModuleResourceWarehouse"))
+                {
+                    var wh = whp.FindModuleImplementing<USI_ModuleResourceWarehouse>();
+                    if (!wh.localTransferEnabled)
+                        continue;
+                }
+                if (whp.Resources.Contains(resName))
+                {
+                    var res = whp.Resources[resName];
+                    if (res.amount >= needed)
+                    {
+                        res.amount -= needed;
+                        needed = 0;
+                        break;
+                    }
+                    else
+                    {
+                        needed -= res.amount;
+                        res.amount = 0;
+                    }
+                }
+            }
         }
 
         private AvailablePart LoadPart(string partName)
@@ -312,24 +469,25 @@ namespace KerbalFabricator
                         }
                     }
 
-                    var plist = p.FindModulesImplementing<ModuleFabricatorPart>();
+                    var plist = p.FindModulesImplementing<ModuleKonFabricator>();
                     printVolume += plist.Sum(x => x.volLimit);
                     printMass += plist.Sum(x => x.massLimit);
                 }
 
-
+                var curMK = Math.Floor(GetResourceQty("MaterialKits"));
+                var curSP = Math.Floor(GetResourceQty("SpecializedParts"));
                 //*****************
                 //*   HEADER
                 //*****************
                 GUILayout.BeginHorizontal();
-                GUILayout.Label(String.Format("<color=#ffd900>Printer Capacity:</color>"), _labelStyle, GUILayout.Width(120));
+                GUILayout.Label(String.Format("<color=#ffd900>Build Capacity:</color>"), _labelStyle, GUILayout.Width(120));
                 GUILayout.Label(String.Format("<color=#FFFFFF>{0} L/{1} t</color>", printVolume,printMass), _labelStyle, GUILayout.Width(100));
                 GUILayout.Label(String.Format("", 30), _labelStyle, GUILayout.Width(50));
                 GUILayout.Label(String.Format("<color=#ffd900>Inventory Capacity:</color>"), _labelStyle, GUILayout.Width(120));
                 GUILayout.Label(String.Format("<color=#FFFFFF>{0} L/{1} t</color>", invVolume,invMass), _labelStyle, GUILayout.Width(100));
                 GUILayout.Label(String.Format("", 30), _labelStyle, GUILayout.Width(50));
-                GUILayout.Label(String.Format("<color=#ffd900>Construction Credits:</color>"), _labelStyle, GUILayout.Width(140));
-                GUILayout.Label(String.Format("<color=#FFFFFF>{0}</color>", credits), _labelStyle, GUILayout.Width(100));
+                GUILayout.Label(String.Format("<color=#ffd900>MatKits/SpecParts:</color>"), _labelStyle, GUILayout.Width(140));
+                GUILayout.Label(String.Format("<color=#FFFFFF>{0}/{1}</color>", curMK, curSP), _labelStyle, GUILayout.Width(100));
                 GUILayout.Label(String.Format("", 30), _labelStyle, GUILayout.Width(50));
                 GUILayout.EndHorizontal();
 
@@ -358,7 +516,7 @@ namespace KerbalFabricator
                 //*****************
                 GUILayout.BeginVertical();
                 GUILayout.Label(String.Format("<color=#ffd900>Categories</color>"), _labelStyle, GUILayout.Width(120));
-                scrollPosCat = GUILayout.BeginScrollView(scrollPosCat, _scrollStyle, GUILayout.Width(160), GUILayout.Height(450));
+                scrollPosCat = GUILayout.BeginScrollView(scrollPosCat, _scrollStyle, GUILayout.Width(160), GUILayout.Height(480));
 
                 for (int i = 0; i < cats.Count; ++i)
                 {
@@ -383,7 +541,7 @@ namespace KerbalFabricator
                 //*****************
                 GUILayout.BeginVertical();
                 GUILayout.Label(String.Format("<color=#ffd900>Parts</color>"), _labelStyle, GUILayout.Width(120));
-                scrollPosPart = GUILayout.BeginScrollView(scrollPosPart, _scrollStyle, GUILayout.Width(380), GUILayout.Height(450));
+                scrollPosPart = GUILayout.BeginScrollView(scrollPosPart, _scrollStyle, GUILayout.Width(380), GUILayout.Height(480));
 
                 foreach(var item in catParts.OrderBy(x=>x.partTitle))
                 {
@@ -408,44 +566,89 @@ namespace KerbalFabricator
                 //   Part:   MyPartName
                 //   Mass:   0.05 t
                 //   Volume: 124 L
-                //   Cost:   1500 Kc
-                //   
+                //   Cost:   100 Material Kits
+                //           50 Specialized Parts
+                //
                 //   [ BUILD IT! ]
                 //
-                //   * =======  o
                 GUILayout.BeginVertical();
                 GUILayout.Label(String.Format(" "), _labelStyle, GUILayout.Width(120)); //Spacer
 
                 if (!String.IsNullOrEmpty(currentItem.partName))
                 {
+                    var costData = GetPartCost(currentPart);
+
+                    var mvColor = "ffffff";
+                    var mkColor = "ffffff";
+                    var spColor = "ffffff";
+                    var eColor = "ffffff";
+                    var valMVIn = true;
+                    var valMVOut = true;
+                    var valMK = true;
+                    var valSP = true;
+                    var valE = true;
+              
+
+                    //*********************
+                    //*  VALIDATION
+                    //*********************
+                    valMVOut = IsSlotAvailable(currentPart);
+                    valMVIn = IsPrinterAvailable(currentPart, printMass, printVolume);
+                    valMK = ResourcesExist("MaterialKits", costData.MatKits);
+                    valSP = ResourcesExist("SpecializedParts", costData.SpecParts);
+                    valE = DoesVesselHaveEngineer();
+
+                    if (!valMVIn)
+                        mvColor = "ff6e69";
+                    if (!valMVOut)
+                        mvColor = "ff6e69";
+                    if (!valMK)
+                        mkColor = "ff6e69";
+                    if (!valSP)
+                        mkColor = "ff6e69";
+
                     GUILayout.BeginHorizontal();
                     GUILayout.Label(String.Format(currentItem.partTitle), _labelStyle, GUILayout.Width(300));
                     GUILayout.EndHorizontal();
 
                     GUILayout.BeginHorizontal();
                     GUILayout.Label(String.Format("<color=#ffd900>Mass:</color>"), _labelStyle, GUILayout.Width(50));
-                    GUILayout.Label(String.Format("{0} t",currentPart.partPrefab.mass - currentPart.partPrefab.resourceMass), _labelStyle, GUILayout.Width(100));
+                    GUILayout.Label(String.Format("<color=#{0}>{1} t</color>",mvColor, currentPart.partPrefab.mass - currentPart.partPrefab.resourceMass), _labelStyle, GUILayout.Width(200));
                     GUILayout.EndHorizontal();
 
                     GUILayout.BeginHorizontal();
                     GUILayout.Label(String.Format("<color=#ffd900>Volume:</color>"), _labelStyle, GUILayout.Width(50));
-                    GUILayout.Label(String.Format("{0} l", currentPart.partPrefab.FindModuleImplementing<ModuleCargoPart>().packedVolume), _labelStyle, GUILayout.Width(100));
+                    GUILayout.Label(String.Format("<color=#{0}>{1} L</color>", mvColor,currentPart.partPrefab.FindModuleImplementing<ModuleCargoPart>().packedVolume), _labelStyle, GUILayout.Width(200));
                     GUILayout.EndHorizontal();
 
                     GUILayout.BeginHorizontal();
                     GUILayout.Label(String.Format("<color=#ffd900>Cost:</color>"), _labelStyle, GUILayout.Width(50));
-                    GUILayout.Label(String.Format("{0} Kc", currentPart.partPrefab.mass * 100), _labelStyle, GUILayout.Width(100));
+                    GUILayout.Label(String.Format("<color=#{0}>{1} Material Kits</color>", mkColor,costData.MatKits), _labelStyle, GUILayout.Width(200));
+                    GUILayout.EndHorizontal();
+
+                    GUILayout.BeginHorizontal();
+                    GUILayout.Label(String.Format(" "), _labelStyle, GUILayout.Width(50));
+                    GUILayout.Label(String.Format("<color=#{0}>{1} Specialized Parts</color>", spColor, costData.SpecParts), _labelStyle, GUILayout.Width(200));
                     GUILayout.EndHorizontal();
 
                     GUILayout.Box(thumbTexture);
 
-                    if (GUILayout.Button("Start KonFabricator!", GUILayout.Width(200), GUILayout.Height(30)))
-                        BuildAThing(currentItem.partName);
+                    if (valMK && valSP && valMVIn && valMVOut)
+                    {
+                        if (GUILayout.Button("Start KonFabricator!", GUILayout.Width(300), GUILayout.Height(50)))
+                            BuildAThing(currentItem.partName);
+                    }
+                    if (!valMVIn)
+                        GUILayout.Label(String.Format("<color=#ff6e69>Engineer not present in active vessel.</color>"), _labelStyle, GUILayout.Width(350));
+                    if (!valMVIn)
+                        GUILayout.Label(String.Format("<color=#ff6e69>Insufficient KonFabricator capacity to build this part.</color>"), _labelStyle, GUILayout.Width(350));
+                    if (!valMVOut)
+                        GUILayout.Label(String.Format("<color=#ff6e69>Cannot find an inventory slot that will fit this part.</color>"), _labelStyle, GUILayout.Width(350));
+                    if (!valMK)
+                        GUILayout.Label(String.Format("<color=#ff6e69>Insufficient Material Kits.</color>"), _labelStyle, GUILayout.Width(350));
+                    if (!valSP)
+                        GUILayout.Label(String.Format("<color=#ff6e69>Insufficient Specialized Parts.</color>"), _labelStyle, GUILayout.Width(350));
 
-                    //GUILayout.BeginHorizontal();
-                    //GUILayout.Label(String.Format("READY"), _centeredLabelStyle, GUILayout.Width(100));
-                    //GUILayout.Box(boxTexture);
-                    //GUILayout.EndHorizontal();
 
                     GUILayout.EndVertical();
                 }
@@ -465,6 +668,19 @@ namespace KerbalFabricator
             }
         }
 
+        private bool DoesVesselHaveEngineer()
+        {
+            foreach (var part in FlightGlobals.ActiveVessel.Parts)
+            {
+                var cCount = part.protoModuleCrew.Count;
+                for (int i = 0; i < cCount; ++i)
+                {
+                    if (part.protoModuleCrew[i].experienceTrait.TypeName == "Engineer")
+                        return true;
+                }
+            }
+            return false;
+        }
 
         private void GetPartsForCategory(string catName)
         {

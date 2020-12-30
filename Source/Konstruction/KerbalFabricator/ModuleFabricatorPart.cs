@@ -1,6 +1,6 @@
 ﻿namespace KerbalFabricator
 {
-    public class ModuleFabricatorPart : PartModule
+    public class ModuleKonFabricator : PartModule
     {
         [KSPField]
         public float massLimit = 0.05f;  //50 kg
