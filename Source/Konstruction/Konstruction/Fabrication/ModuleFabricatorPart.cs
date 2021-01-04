@@ -1,4 +1,4 @@
-﻿namespace KerbalFabricator
+﻿namespace Konstruction.Fabrication
 {
     public class ModuleKonFabricator : PartModule
     {

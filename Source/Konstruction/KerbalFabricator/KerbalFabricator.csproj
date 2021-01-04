@@ -106,9 +106,7 @@
     </Reference>
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="ModuleFabricatorPart.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
-    <Compile Include="FabricationMonitor.cs" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
 </Project>

@@ -7,7 +7,7 @@ using KSP.UI.Screens;
 using System.Collections.Generic;
 using USITools;
 
-namespace KerbalFabricator
+namespace Konstruction.Fabrication
 {
     public struct InventoryConstraints
     {

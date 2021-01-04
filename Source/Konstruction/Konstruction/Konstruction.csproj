@@ -86,25 +86,27 @@
     </Reference>
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="ModuleConstructedPart.cs" />
-    <Compile Include="ModuleCounterweight.cs" />
-    <Compile Include="ModuleFlexiLeg.cs" />
-    <Compile Include="ModuleFlexiLegController.cs" />
-    <Compile Include="ModuleGrippyWheel.cs" />
-    <Compile Include="ModuleGroundAnchor.cs" />
-    <Compile Include="ModuleKonstructionForeman.cs" />
-    <Compile Include="ModuleKonstructionHelper.cs" />
-    <Compile Include="ModuleMagneticNode.cs" />
-    <Compile Include="ModulePiston.cs" />
-    <Compile Include="ModuleServo.cs" />
-    <Compile Include="ModuleServoConfig.cs" />
-    <Compile Include="ModuleServoGroup.cs" />
-    <Compile Include="ModuleWeldablePort.cs" />
-    <Compile Include="NodeUtilities.cs" />
-    <Compile Include="ServoData.cs" />
-    <Compile Include="ServoMonitor.cs" />
-    <Compile Include="ServoPosition.cs" />
-    <Compile Include="WeldingData.cs" />
+    <Compile Include="Fabrication\FabricationMonitor.cs" />
+    <Compile Include="Fabrication\ModuleFabricatorPart.cs" />
+    <Compile Include="Misc\ModuleConstructedPart.cs" />
+    <Compile Include="Misc\ModuleCounterweight.cs" />
+    <Compile Include="Robotics\ModuleFlexiLeg.cs" />
+    <Compile Include="Robotics\ModuleFlexiLegController.cs" />
+    <Compile Include="Misc\ModuleGrippyWheel.cs" />
+    <Compile Include="Misc\ModuleGroundAnchor.cs" />
+    <Compile Include="EVA\ModuleKonstructionForeman.cs" />
+    <Compile Include="EVA\ModuleKonstructionHelper.cs" />
+    <Compile Include="Misc\ModuleMagneticNode.cs" />
+    <Compile Include="Robotics\ModulePiston.cs" />
+    <Compile Include="Robotics\ModuleServo.cs" />
+    <Compile Include="Robotics\ModuleServoConfig.cs" />
+    <Compile Include="Robotics\ModuleServoGroup.cs" />
+    <Compile Include="Welding\ModuleWeldablePort.cs" />
+    <Compile Include="Welding\NodeUtilities.cs" />
+    <Compile Include="Robotics\ServoData.cs" />
+    <Compile Include="Robotics\ServoMonitor.cs" />
+    <Compile Include="Robotics\ServoPosition.cs" />
+    <Compile Include="Welding\WeldingData.cs" />
   </ItemGroup>
   <ItemGroup>
     <Folder Include="Properties\" />
