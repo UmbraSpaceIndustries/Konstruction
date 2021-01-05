@@ -88,6 +88,7 @@
   <ItemGroup>
     <Compile Include="Fabrication\FabricationMonitor.cs" />
     <Compile Include="Fabrication\ModuleFabricatorPart.cs" />
+    <Compile Include="Utilities\PartUtilities.cs" />
     <Compile Include="Misc\ModuleConstructedPart.cs" />
     <Compile Include="Misc\ModuleCounterweight.cs" />
     <Compile Include="Robotics\ModuleFlexiLeg.cs" />
@@ -101,6 +102,13 @@
     <Compile Include="Robotics\ModuleServo.cs" />
     <Compile Include="Robotics\ModuleServoConfig.cs" />
     <Compile Include="Robotics\ModuleServoGroup.cs" />
+    <Compile Include="Settings\AddScenarioModules.cs" />
+    <Compile Include="Settings\KonstructionConfig.cs" />
+    <Compile Include="Settings\KonstructionCostResource.cs" />
+    <Compile Include="Settings\KonstructionManager.cs" />
+    <Compile Include="Settings\KonstructionModuleResource.cs" />
+    <Compile Include="Settings\KonstructionPersistance.cs" />
+    <Compile Include="Settings\KonstructionScenario.cs" />
     <Compile Include="Welding\ModuleWeldablePort.cs" />
     <Compile Include="Welding\NodeUtilities.cs" />
     <Compile Include="Robotics\ServoData.cs" />

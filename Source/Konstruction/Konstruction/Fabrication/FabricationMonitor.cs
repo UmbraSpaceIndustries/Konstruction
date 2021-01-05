@@ -9,22 +9,16 @@ using USITools;
 
 namespace Konstruction.Fabrication
 {
-    public struct InventoryConstraints
-    {
-        public float MassAvailable;
-        public float VolumeAvailable;
-    }
-
     public struct PartScrollbarData
     {
         public string partTitle;
         public string partName;
     }
 
-    public struct CostData
+    public struct InventoryConstraints
     {
-        public int MatKits;
-        public int SpecParts;
+        public float MassAvailable;
+        public float VolumeAvailable;
     }
 
     [KSPAddon(KSPAddon.Startup.Flight, false)]
@@ -55,24 +49,6 @@ namespace Konstruction.Fabrication
         public static Dictionary<string, string> PartTextureCache;
 
         public const int CONST_MATKIT_RATIO = 2;
-
-        private CostData GetPartCost(AvailablePart part)
-        {
-            CostData cost = new CostData();
-            //MatKits
-            var mk = PartResourceLibrary.Instance.resourceDefinitions["MaterialKits"];
-            cost.MatKits = (int) Math.Ceiling(part.partPrefab.mass * 2f / mk.density);
-
-            //SpecParts
-            var sp = PartResourceLibrary.Instance.resourceDefinitions["SpecializedParts"];
-            var mkCost = cost.MatKits * mk.unitCost;
-            var spCost = mkCost - part.cost;
-            if (spCost > 0)
-            {
-                cost.SpecParts = (int)Math.Ceiling(spCost / sp.unitCost);
-            }
-            return cost;
-        }
 
         private string GetThumbFile()
         {
@@ -309,7 +285,7 @@ namespace Konstruction.Fabrication
                         {
                             if (inv.IsSlotEmpty(z))
                             {
-                                ConsumeResources(GetPartCost(iPart));
+                                Utilities.PartUtilities.ConsumeResources(Utilities.PartUtilities.GetPartCost(iPart));
                                 foreach(var r in iPart.partPrefab.Resources)
                                 {
                                     r.amount = 0;
@@ -322,12 +298,6 @@ namespace Konstruction.Fabrication
                 }
             }
             return false;
-        }
-
-        private void ConsumeResources(CostData cost)
-        {
-            ConsumeResource("MaterialKits", cost.MatKits);
-            ConsumeResource("SpecializedParts", cost.SpecParts);
         }
 
         private InventoryConstraints GetCapacity(ModuleInventoryPart inv)
@@ -365,69 +335,6 @@ namespace Konstruction.Fabrication
             var cats = new List<string>();
             cats.AddRange(AllCargoParts.Select(x => x.category.ToStringCached()).Distinct());
             return cats;
-        }
-
-        private bool ResourcesExist(string resName, double needed)
-        {
-            double foundAmount = GetResourceQty(resName);
-            return foundAmount >= needed;
-        }
-
-        private double GetResourceQty(string resName)
-        {
-            double foundAmount = 0;
-            var whpList = LogisticsTools.GetRegionalWarehouses(FlightGlobals.ActiveVessel, "USI_ModuleResourceWarehouse");
-            var count = whpList.Count;
-
-            for (int i = 0; i < count; ++i)
-            {
-                var whp = whpList[i];
-                if (whp.Modules.Contains("USI_ModuleResourceWarehouse"))
-                {
-                    var wh = whp.FindModuleImplementing<USI_ModuleResourceWarehouse>();
-                    if (!wh.localTransferEnabled)
-                        continue;
-                }
-                if (whp.Resources.Contains(resName))
-                {
-                    var res = whp.Resources[resName];
-                    foundAmount += res.amount;
-                }
-            }
-            return foundAmount;
-        }
-
-        private void ConsumeResource(string resName, double amtToTake)
-        {
-            double needed = amtToTake;
-            var whpList = LogisticsTools.GetRegionalWarehouses(FlightGlobals.ActiveVessel, "USI_ModuleResourceWarehouse");
-            var count = whpList.Count;
-
-            for (int i = 0; i < count; ++i)
-            {
-                var whp = whpList[i];
-                if (whp.Modules.Contains("USI_ModuleResourceWarehouse"))
-                {
-                    var wh = whp.FindModuleImplementing<USI_ModuleResourceWarehouse>();
-                    if (!wh.localTransferEnabled)
-                        continue;
-                }
-                if (whp.Resources.Contains(resName))
-                {
-                    var res = whp.Resources[resName];
-                    if (res.amount >= needed)
-                    {
-                        res.amount -= needed;
-                        needed = 0;
-                        break;
-                    }
-                    else
-                    {
-                        needed -= res.amount;
-                        res.amount = 0;
-                    }
-                }
-            }
         }
 
         private AvailablePart LoadPart(string partName)
@@ -474,8 +381,8 @@ namespace Konstruction.Fabrication
                     printMass += plist.Sum(x => x.massLimit);
                 }
 
-                var curMK = Math.Floor(GetResourceQty("MaterialKits"));
-                var curSP = Math.Floor(GetResourceQty("SpecializedParts"));
+                var curMK = Math.Floor(Utilities.PartUtilities.GetResourceQty("MaterialKits"));
+                var curSP = Math.Floor(Utilities.PartUtilities.GetResourceQty("SpecializedParts"));
                 //*****************
                 //*   HEADER
                 //*****************
@@ -576,36 +483,26 @@ namespace Konstruction.Fabrication
 
                 if (!String.IsNullOrEmpty(currentItem.partName))
                 {
-                    var costData = GetPartCost(currentPart);
+                    var costData = Utilities.PartUtilities.GetPartCost(currentPart);
 
                     var mvColor = "ffffff";
-                    var mkColor = "ffffff";
-                    var spColor = "ffffff";
                     var eColor = "ffffff";
                     var valMVIn = true;
                     var valMVOut = true;
-                    var valMK = true;
-                    var valSP = true;
                     var valE = true;
-              
+                    var valRes = true;
 
                     //*********************
                     //*  VALIDATION
                     //*********************
                     valMVOut = IsSlotAvailable(currentPart);
                     valMVIn = IsPrinterAvailable(currentPart, printMass, printVolume);
-                    valMK = ResourcesExist("MaterialKits", costData.MatKits);
-                    valSP = ResourcesExist("SpecializedParts", costData.SpecParts);
-                    valE = DoesVesselHaveEngineer();
+                    valE = Utilities.CrewUtilities.DoesVesselHaveCrewType("Engineer");
 
                     if (!valMVIn)
                         mvColor = "ff6e69";
                     if (!valMVOut)
                         mvColor = "ff6e69";
-                    if (!valMK)
-                        mkColor = "ff6e69";
-                    if (!valSP)
-                        mkColor = "ff6e69";
 
                     GUILayout.BeginHorizontal();
                     GUILayout.Label(String.Format(currentItem.partTitle), _labelStyle, GUILayout.Width(300));
@@ -621,19 +518,24 @@ namespace Konstruction.Fabrication
                     GUILayout.Label(String.Format("<color=#{0}>{1} L</color>", mvColor,currentPart.partPrefab.FindModuleImplementing<ModuleCargoPart>().packedVolume), _labelStyle, GUILayout.Width(200));
                     GUILayout.EndHorizontal();
 
-                    GUILayout.BeginHorizontal();
-                    GUILayout.Label(String.Format("<color=#ffd900>Cost:</color>"), _labelStyle, GUILayout.Width(50));
-                    GUILayout.Label(String.Format("<color=#{0}>{1} Material Kits</color>", mkColor,costData.MatKits), _labelStyle, GUILayout.Width(200));
-                    GUILayout.EndHorizontal();
-
-                    GUILayout.BeginHorizontal();
-                    GUILayout.Label(String.Format(" "), _labelStyle, GUILayout.Width(50));
-                    GUILayout.Label(String.Format("<color=#{0}>{1} Specialized Parts</color>", spColor, costData.SpecParts), _labelStyle, GUILayout.Width(200));
-                    GUILayout.EndHorizontal();
+                    foreach (var cost in costData)
+                    {
+                        var valThisRes = Utilities.PartUtilities.ResourcesExist(cost.Resource.name, cost.Quantity);
+                        var resColor = "ffffff";
+                        if (!valThisRes)
+                        {
+                            resColor = "ff6e69";
+                            valRes = false;
+                        }
+                        GUILayout.BeginHorizontal();
+                        GUILayout.Label(String.Format("<color=#ffd900>Cost:</color>"), _labelStyle, GUILayout.Width(50));
+                        GUILayout.Label(String.Format("<color=#{0}>{1} {2}</color>", resColor, cost.Resource.name, cost.Quantity), _labelStyle, GUILayout.Width(200));
+                        GUILayout.EndHorizontal();
+                    }
 
                     GUILayout.Box(thumbTexture);
 
-                    if (valMK && valSP && valMVIn && valMVOut)
+                    if (valRes && valMVIn && valMVOut)
                     {
                         if (GUILayout.Button("Start KonFabricator!", GUILayout.Width(300), GUILayout.Height(50)))
                             BuildAThing(currentItem.partName);
@@ -644,11 +546,8 @@ namespace Konstruction.Fabrication
                         GUILayout.Label(String.Format("<color=#ff6e69>Insufficient KonFabricator capacity to build this part.</color>"), _labelStyle, GUILayout.Width(350));
                     if (!valMVOut)
                         GUILayout.Label(String.Format("<color=#ff6e69>Cannot find an inventory slot that will fit this part.</color>"), _labelStyle, GUILayout.Width(350));
-                    if (!valMK)
-                        GUILayout.Label(String.Format("<color=#ff6e69>Insufficient Material Kits.</color>"), _labelStyle, GUILayout.Width(350));
-                    if (!valSP)
-                        GUILayout.Label(String.Format("<color=#ff6e69>Insufficient Specialized Parts.</color>"), _labelStyle, GUILayout.Width(350));
-
+                    if (!valRes)
+                        GUILayout.Label(String.Format("<color=#ff6e69>Insufficient resources.</color>"), _labelStyle, GUILayout.Width(350));
 
                     GUILayout.EndVertical();
                 }
@@ -666,20 +565,6 @@ namespace Konstruction.Fabrication
                 GUILayout.EndVertical();
                 GUI.DragWindow();
             }
-        }
-
-        private bool DoesVesselHaveEngineer()
-        {
-            foreach (var part in FlightGlobals.ActiveVessel.Parts)
-            {
-                var cCount = part.protoModuleCrew.Count;
-                for (int i = 0; i < cCount; ++i)
-                {
-                    if (part.protoModuleCrew[i].experienceTrait.TypeName == "Engineer")
-                        return true;
-                }
-            }
-            return false;
         }
 
         private void GetPartsForCategory(string catName)
