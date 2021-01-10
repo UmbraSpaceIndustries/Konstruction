@@ -9,6 +9,135 @@ namespace Konstruction
         private List<KonstructionCostResource> _costResources;
         private KonstructionConfig _settings;
 
+        public void AddCostResourceNode(KonstructionCostResource cost)
+        {
+            var count = _costResources.Count;
+            for (int i = 0; i < count; ++i)
+            {
+                if (_costResources[i].resourceName == cost.resourceName)
+                    return;
+            }
+            _costResources.Add(cost);
+        }
+
+        public void AddModuleResourceNode(KonstructionModuleResource mod)
+        {
+            var count = _moduleResources.Count;
+            for (int i = 0; i < count; ++i)
+            {
+                if (_moduleResources[i].moduleName == mod.moduleName)
+                    return;
+            }
+            _moduleResources.Add(mod);
+        }
+
+        public void DeleteCostNode(string res)
+        {
+            var count = _costResources.Count;
+            for (int i = 0; i < count; ++i)
+            {
+                var k = _costResources[i];
+                if (k.resourceName == res)
+                {
+                    _costResources.Remove(k);
+                    return;
+                }
+            }
+        }
+
+        public void DeleteModuleNode(string mod)
+        {
+            var count = _moduleResources.Count;
+            for (int i = 0; i < count; ++i)
+            {
+                var k = _moduleResources[i];
+                if (k.moduleName == mod)
+                {
+                    _moduleResources.Remove(k);
+                    return;
+                }
+            }
+        }
+
+        public List<KonstructionCostResource> GetCostResources()
+        {
+            return _costResources ?? (_costResources = LoadCostResources());
+        }
+
+        public List<KonstructionModuleResource> GetModuleResources()
+        {
+            return _moduleResources ?? (_moduleResources = LoadModuleResources());
+        }
+
+        public KonstructionConfig GetSettings()
+        {
+            return _settings ?? (_settings = LoadKonstructionConfig());
+        }
+
+        public static int GetValue(ConfigNode config, string name, int currentValue)
+        {
+            if (config.HasValue(name) && int.TryParse(config.GetValue(name), out int newValue))
+            {
+                return newValue;
+            }
+            return currentValue;
+        }
+
+        public static bool GetValue(ConfigNode config, string name, bool currentValue)
+        {
+            if (config.HasValue(name) && bool.TryParse(config.GetValue(name), out bool newValue))
+            {
+                return newValue;
+            }
+            return currentValue;
+        }
+
+        public static float GetValue(ConfigNode config, string name, float currentValue)
+        {
+            if (config.HasValue(name) && float.TryParse(config.GetValue(name), out float newValue))
+            {
+                return newValue;
+            }
+            return currentValue;
+        }
+
+        public static List<KonstructionCostResource> ImportCostNodeList(ConfigNode[] nodes)
+        {
+            var nList = new List<KonstructionCostResource>();
+            var count = nodes.Length;
+            for (int i = 0; i < count; ++i)
+            {
+                var node = nodes[i];
+                var res = ResourceUtilities.LoadNodeProperties<KonstructionCostResource>(node);
+                nList.Add(res);
+            }
+            return nList;
+        }
+
+        public static List<KonstructionModuleResource> ImportModuleNodeList(ConfigNode[] nodes)
+        {
+            var nList = new List<KonstructionModuleResource>();
+            var count = nodes.Length;
+            for (int i = 0; i < count; ++i)
+            {
+                var node = nodes[i];
+                var res = ResourceUtilities.LoadNodeProperties<KonstructionModuleResource>(node);
+                nList.Add(res);
+            }
+            return nList;
+        }
+
+        public KonstructionConfig ImportConfig(ConfigNode node)
+        {
+            var config = ResourceUtilities.LoadNodeProperties<KonstructionConfig>(node);
+            return config;
+        }
+
+        public bool IsLoaded()
+        {
+            return SettingsNode != null;
+        }
+
         public void Load(ConfigNode node)
         {
             if (node.HasNode("KONSTRUCTION_SETTINGS"))
@@ -17,8 +146,6 @@ namespace Konstruction
                 _moduleResources = LoadModuleResources();
                 _costResources = LoadCostResources();
                 _settings = LoadKonstructionConfig();
-                //Reset cache
-                KonstructionManager.Instance.ResetCache();
             }
             else
             {
@@ -28,9 +155,16 @@ namespace Konstruction
             }
         }
 
-        public bool isLoaded()
+        private List<KonstructionCostResource> LoadCostResources()
         {
-            return SettingsNode != null;
+            var configNodes = GameDatabase.Instance.GetConfigNodes("KONSTRUCTION_COST_RESOURCE");
+            var nodeList = new List<KonstructionCostResource>();
+            foreach (var n in configNodes)
+            {
+                var node = ResourceUtilities.LoadNodeProperties<KonstructionCostResource>(n);
+                nodeList.Add(node);
+            }
+            return nodeList;
         }
 
         private KonstructionConfig LoadKonstructionConfig()
@@ -53,7 +187,6 @@ namespace Konstruction
             return finalSettings;
         }
 
-
         private List<KonstructionModuleResource> LoadModuleResources()
         {
             var configNodes = GameDatabase.Instance.GetConfigNodes("KONSTRUCTION_MODULE_COST");
@@ -66,33 +199,36 @@ namespace Konstruction
             return nodeList;
         }
 
-        public List<KonstructionModuleResource> GetModuleResources()
+        public void SaveConfig(KonstructionConfig config)
         {
-            return _moduleResources ?? (_moduleResources = LoadModuleResources());
+            _settings.massResourceName = config.massResourceName;
+            _settings.massMultiplier = config.massMultiplier;
+            _settings.costResourceName = config.costResourceName;
         }
 
-        private List<KonstructionCostResource> LoadCostResources()
+        public void SaveCostNode(KonstructionCostResource cost)
         {
-            var configNodes = GameDatabase.Instance.GetConfigNodes("KONSTRUCTION_COST_RESOURCE");
-            var nodeList = new List<KonstructionCostResource>();
-            foreach (var n in configNodes)
+            KonstructionCostResource c = null;
+            var count = _costResources.Count;
+            for (int i = 0; i < count; ++i)
             {
-                var node = ResourceUtilities.LoadNodeProperties<KonstructionCostResource>(n);
-                nodeList.Add(node);
+                var n = _costResources[i];
+                if (n.resourceName == cost.resourceName)
+                {
+                    c = n;
+                    break;
+                }
             }
-            return nodeList;
-        }
 
-        public List<KonstructionCostResource> GetCostResources()
-        {
-            return _costResources ?? (_costResources = LoadCostResources());
-        }
-
-
-        public KonstructionConfig GetSettings()
-        {
-            return _settings ?? (_settings = LoadKonstructionConfig());
-
+            if (c == null)
+            {
+                c = new KonstructionCostResource
+                {
+                    resourceName = cost.resourceName,
+                    maxMass = cost.maxMass
+                };
+                _costResources.Add(c);
+            }
         }
 
         public void Save(ConfigNode node)
@@ -144,152 +280,6 @@ namespace Konstruction
                 sNode.AddValue("costResourceName", _settings.costResourceName);
                 SettingsNode.AddNode(sNode);
             }
-            //Reset cache
-            KonstructionManager.Instance.ResetCache();
-        }
-
-        public static int GetValue(ConfigNode config, string name, int currentValue)
-        {
-            int newValue;
-            if (config.HasValue(name) && int.TryParse(config.GetValue(name), out newValue))
-            {
-                return newValue;
-            }
-            return currentValue;
-        }
-
-        public static bool GetValue(ConfigNode config, string name, bool currentValue)
-        {
-            bool newValue;
-            if (config.HasValue(name) && bool.TryParse(config.GetValue(name), out newValue))
-            {
-                return newValue;
-            }
-            return currentValue;
-        }
-
-        public static float GetValue(ConfigNode config, string name, float currentValue)
-        {
-            float newValue;
-            if (config.HasValue(name) && float.TryParse(config.GetValue(name), out newValue))
-            {
-                return newValue;
-            }
-            return currentValue;
-        }
-
-        public void AddCostResourceNode(KonstructionCostResource cost)
-        {
-            var count = _costResources.Count;
-            for (int i = 0; i < count; ++i)
-            {
-                if (_costResources[i].resourceName == cost.resourceName)
-                    return;
-            }
-            _costResources.Add(cost);
-        }
-
-        public void AddModuleResourceNode(KonstructionModuleResource mod)
-        {
-            var count = _moduleResources.Count;
-            for (int i = 0; i < count; ++i)
-            {
-                if (_moduleResources[i].moduleName == mod.moduleName)
-                    return;
-            }
-            _moduleResources.Add(mod);
-        }
-
-        public void DeleteCostNode(string res)
-        {
-            var count = _costResources.Count;
-            for (int i = 0; i < count; ++i)
-            {
-                var k = _costResources[i];
-                if (k.resourceName == res)
-                {
-                    _costResources.Remove(k);
-                    return;
-                }
-            }
-        }
-
-        public void DeleteModuleNode(string mod)
-        {
-            var count = _moduleResources.Count;
-            for (int i = 0; i < count; ++i)
-            {
-                var k = _moduleResources[i];
-                if (k.moduleName == mod)
-                {
-                    _moduleResources.Remove(k);
-                    return;
-                }
-            }
-        }
-
-        public static List<KonstructionCostResource> ImportCostNodeList(ConfigNode[] nodes)
-        {
-            var nList = new List<KonstructionCostResource>();
-            var count = nodes.Length;
-            for (int i = 0; i < count; ++i)
-            {
-                var node = nodes[i];
-                var res = ResourceUtilities.LoadNodeProperties<KonstructionCostResource>(node);
-                nList.Add(res);
-            }
-            return nList;
-        }
-
-
-        public static List<KonstructionModuleResource> ImportModuleNodeList(ConfigNode[] nodes)
-        {
-            var nList = new List<KonstructionModuleResource>();
-            var count = nodes.Length;
-            for (int i = 0; i < count; ++i)
-            {
-                var node = nodes[i];
-                var res = ResourceUtilities.LoadNodeProperties<KonstructionModuleResource>(node);
-                nList.Add(res);
-            }
-            return nList;
-        }
-
-
-        public KonstructionConfig ImportConfig(ConfigNode node)
-        {
-            var config = ResourceUtilities.LoadNodeProperties<KonstructionConfig>(node);
-            return config;
-        }
-
-        public void SaveConfig(KonstructionConfig config)
-        {
-            _settings.massResourceName = config.massResourceName;
-            _settings.massMultiplier = config.massMultiplier;
-            _settings.costResourceName = config.costResourceName;
-        }
-
-        public void SaveCostNode(KonstructionCostResource cost)
-        {
-            KonstructionCostResource c = null;
-            var count = _costResources.Count;
-            for (int i = 0; i < count; ++i)
-            {
-                var n = _costResources[i];
-                if (n.resourceName == cost.resourceName)
-                {
-                    c = n;
-                    break;
-                }
-            }
-
-            if (c == null)
-            {
-                c = new KonstructionCostResource();
-                c.resourceName = cost.resourceName;
-                c.maxMass = cost.maxMass;
-                _costResources.Add(c);
-            }
         }
 
         public void SaveModuleNode(KonstructionModuleResource mod)
@@ -308,13 +298,14 @@ namespace Konstruction
 
             if (c == null)
             {
-                c = new KonstructionModuleResource();
-                c.moduleName = mod.moduleName;
-                c.resourceName = mod.resourceName;
-                c.massMultiplier = mod.massMultiplier;
+                c = new KonstructionModuleResource
+                {
+                    moduleName = mod.moduleName,
+                    resourceName = mod.resourceName,
+                    massMultiplier = mod.massMultiplier
+                };
                 _moduleResources.Add(c);
             }
         }
     }
-
 }

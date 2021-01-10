@@ -46,6 +46,8 @@ namespace Konstruction.Fabrication
         private Texture nfTexture;
         private Texture thumbTexture;
         private AvailablePart currentPart;
+        private KonstructionPersistance _persistence;
+        private bool _isLoaded;
         public static Dictionary<string, string> PartTextureCache;
 
         public const int CONST_MATKIT_RATIO = 2;
@@ -57,6 +59,7 @@ namespace Konstruction.Fabrication
             var thumbFile = files.Where(f => f.Contains("@thumbs")).FirstOrDefault();
             return thumbFile;
         }
+
         private void ResetThumbTexture()
         {
             if (PartTextureCache == null)
@@ -70,7 +73,7 @@ namespace Konstruction.Fabrication
             }
 
             var thumb = PartTextureCache[currentPart.name];
-            if(!String.IsNullOrEmpty(thumb))
+            if(!string.IsNullOrEmpty(thumb))
             {
                 thumbTexture = LoadTexture(thumb);
             }
@@ -79,7 +82,6 @@ namespace Konstruction.Fabrication
                 thumbTexture = nfTexture;
             }
         }
-       
 
         public IEnumerable<Part> VesselInventoryParts
         {
@@ -123,7 +125,7 @@ namespace Konstruction.Fabrication
                 foreach(var part in AllCargoParts)
                 {
                     var tag = part.tags.ToLower().Split(' ').Where(t=>t.StartsWith("cck-")).FirstOrDefault();
-                    if (String.IsNullOrEmpty(tag))
+                    if (string.IsNullOrEmpty(tag))
                         continue;
 
                     var newTag = tag.Substring(4);
@@ -134,20 +136,18 @@ namespace Konstruction.Fabrication
             return _cckTags;
         }
 
-
         void Awake()
         {
             if (!HighLogic.LoadedSceneIsFlight)
                 GuiOff();
 
             var path = Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location);
-            this.fabButton = ApplicationLauncher.Instance.AddModApplication(GuiOn, GuiOff, null, null, null, null,
+            fabButton = ApplicationLauncher.Instance.AddModApplication(GuiOn, GuiOff, null, null, null, null,
                 ApplicationLauncher.AppScenes.ALWAYS, LoadTexture(Path.Combine(path, "GearWrench.png")));
 
             nfTexture = LoadTexture(Path.Combine(path, "notfound.png"));
             thumbTexture = LoadTexture(Path.Combine(path, "notfound.png"));
         }
-
 
         private Texture2D LoadTexture(string fullName)
         {
@@ -159,13 +159,32 @@ namespace Konstruction.Fabrication
 
         private void GuiOn()
         {
-            renderDisplay = true;
+            if (_isLoaded)
+                renderDisplay = true;
         }
 
         public void Start()
         {
             if (!_hasInitStyles)
                 InitStyles();
+
+            var scenario = FindObjectOfType<KonstructionScenario>();
+            if (scenario == null || scenario.ServiceManager == null)
+            {
+                Debug.LogError("[KONSTRUCTION] FabricationMonitor could not retrieve a reference to KonstructionScenario.");
+            }
+            else
+            {
+                _persistence = scenario.ServiceManager.GetService<KonstructionPersistance>();
+                if (_persistence == null)
+                {
+                    Debug.LogError("[KONSTRUCTION] FabricationMonitor could not retrieve a reference to KonstructionPersistence.");
+                }
+                else
+                {
+                    _isLoaded = true;
+                }
+            }
         }
 
         private void GuiOff()
@@ -183,19 +202,15 @@ namespace Konstruction.Fabrication
                 if (!HighLogic.LoadedSceneIsFlight)
                     GuiOff();
 
-                if (Event.current.type == EventType.Repaint || Event.current.isMouse)
-                {
-                    //preDrawQueue
-                }
-                Ondraw();
+                OnDraw();
             }
             catch (Exception ex)
             {
-                print("ERROR in FabricationMonitor (OnGui) " + ex.Message);
+                Debug.LogError("[KONSTRUCTION] ERROR in FabricationMonitor (OnGui) " + ex.Message);
             }
         }
 
-        private void Ondraw()
+        private void OnDraw()
         {
             _windowPosition = GUILayout.Window(10, _windowPosition, OnWindow, "KonFabricator Control Panel", _windowStyle);
         }
@@ -230,7 +245,6 @@ namespace Konstruction.Fabrication
                 
             return true;
         }
-
 
         private bool IsSlotAvailable(AvailablePart part)
         {
@@ -285,7 +299,7 @@ namespace Konstruction.Fabrication
                         {
                             if (inv.IsSlotEmpty(z))
                             {
-                                Utilities.PartUtilities.ConsumeResources(Utilities.PartUtilities.GetPartCost(iPart));
+                                Utilities.PartUtilities.ConsumeResources(Utilities.PartUtilities.GetPartCost(iPart, _persistence));
                                 foreach(var r in iPart.partPrefab.Resources)
                                 {
                                     r.amount = 0;
@@ -387,15 +401,15 @@ namespace Konstruction.Fabrication
                 //*   HEADER
                 //*****************
                 GUILayout.BeginHorizontal();
-                GUILayout.Label(String.Format("<color=#ffd900>Build Capacity:</color>"), _labelStyle, GUILayout.Width(120));
-                GUILayout.Label(String.Format("<color=#FFFFFF>{0} L/{1} t</color>", printVolume,printMass), _labelStyle, GUILayout.Width(100));
-                GUILayout.Label(String.Format("", 30), _labelStyle, GUILayout.Width(50));
-                GUILayout.Label(String.Format("<color=#ffd900>Inventory Capacity:</color>"), _labelStyle, GUILayout.Width(120));
-                GUILayout.Label(String.Format("<color=#FFFFFF>{0} L/{1} t</color>", invVolume,invMass), _labelStyle, GUILayout.Width(100));
-                GUILayout.Label(String.Format("", 30), _labelStyle, GUILayout.Width(50));
-                GUILayout.Label(String.Format("<color=#ffd900>MatKits/SpecParts:</color>"), _labelStyle, GUILayout.Width(140));
-                GUILayout.Label(String.Format("<color=#FFFFFF>{0}/{1}</color>", curMK, curSP), _labelStyle, GUILayout.Width(100));
-                GUILayout.Label(String.Format("", 30), _labelStyle, GUILayout.Width(50));
+                GUILayout.Label(string.Format("<color=#ffd900>Build Capacity:</color>"), _labelStyle, GUILayout.Width(120));
+                GUILayout.Label(string.Format("<color=#FFFFFF>{0} L/{1} t</color>", printVolume,printMass), _labelStyle, GUILayout.Width(100));
+                GUILayout.Label(string.Format("", 30), _labelStyle, GUILayout.Width(50));
+                GUILayout.Label(string.Format("<color=#ffd900>Inventory Capacity:</color>"), _labelStyle, GUILayout.Width(120));
+                GUILayout.Label(string.Format("<color=#FFFFFF>{0} L/{1} t</color>", invVolume,invMass), _labelStyle, GUILayout.Width(100));
+                GUILayout.Label(string.Format("", 30), _labelStyle, GUILayout.Width(50));
+                GUILayout.Label(string.Format("<color=#ffd900>MatKits/SpecParts:</color>"), _labelStyle, GUILayout.Width(140));
+                GUILayout.Label(string.Format("<color=#FFFFFF>{0}/{1}</color>", curMK, curSP), _labelStyle, GUILayout.Width(100));
+                GUILayout.Label(string.Format("", 30), _labelStyle, GUILayout.Width(50));
                 GUILayout.EndHorizontal();
 
 
@@ -409,7 +423,7 @@ namespace Konstruction.Fabrication
                 if (catParts == null)
                     catParts = new List<PartScrollbarData>();
 
-                if (String.IsNullOrEmpty(currentCat))
+                if (string.IsNullOrEmpty(currentCat))
                 {
                     currentCat = cats[0];
                     GetPartsForCategory(currentCat);
@@ -422,7 +436,7 @@ namespace Konstruction.Fabrication
                 //*   CATEGORIES
                 //*****************
                 GUILayout.BeginVertical();
-                GUILayout.Label(String.Format("<color=#ffd900>Categories</color>"), _labelStyle, GUILayout.Width(120));
+                GUILayout.Label(string.Format("<color=#ffd900>Categories</color>"), _labelStyle, GUILayout.Width(120));
                 scrollPosCat = GUILayout.BeginScrollView(scrollPosCat, _scrollStyle, GUILayout.Width(160), GUILayout.Height(480));
 
                 for (int i = 0; i < cats.Count; ++i)
@@ -433,7 +447,7 @@ namespace Konstruction.Fabrication
                     {
                         catCol = "ffd900";
                     }
-                    if (GUILayout.Button(String.Format("<color=#{0}>{1}</color>", catCol, cat, "Label"), _labelStyle, GUILayout.Width(120)))
+                    if (GUILayout.Button(string.Format("<color=#{0}>{1}</color>", catCol, cat, "Label"), _labelStyle, GUILayout.Width(120)))
                     {
                         currentCat = cat;
                         GetPartsForCategory(cat);
@@ -447,7 +461,7 @@ namespace Konstruction.Fabrication
                 //*   PARTS
                 //*****************
                 GUILayout.BeginVertical();
-                GUILayout.Label(String.Format("<color=#ffd900>Parts</color>"), _labelStyle, GUILayout.Width(120));
+                GUILayout.Label(string.Format("<color=#ffd900>Parts</color>"), _labelStyle, GUILayout.Width(120));
                 scrollPosPart = GUILayout.BeginScrollView(scrollPosPart, _scrollStyle, GUILayout.Width(380), GUILayout.Height(480));
 
                 foreach(var item in catParts.OrderBy(x=>x.partTitle))
@@ -457,7 +471,7 @@ namespace Konstruction.Fabrication
                     {
                         itemCol = "ffd900";
                     }
-                    if (GUILayout.Button(String.Format("<color=#{0}>{1}</color>", itemCol, item.partTitle, "Label"), _labelStyle, GUILayout.Width(340)))
+                    if (GUILayout.Button(string.Format("<color=#{0}>{1}</color>", itemCol, item.partTitle, "Label"), _labelStyle, GUILayout.Width(340)))
                     {
                         currentItem = item;
                         currentPart = GetPartByName(currentItem.partName);
@@ -479,11 +493,11 @@ namespace Konstruction.Fabrication
                 //   [ BUILD IT! ]
                 //
                 GUILayout.BeginVertical();
-                GUILayout.Label(String.Format(" "), _labelStyle, GUILayout.Width(120)); //Spacer
+                GUILayout.Label(string.Format(" "), _labelStyle, GUILayout.Width(120)); //Spacer
 
-                if (!String.IsNullOrEmpty(currentItem.partName))
+                if (!string.IsNullOrEmpty(currentItem.partName))
                 {
-                    var costData = Utilities.PartUtilities.GetPartCost(currentPart);
+                    var costData = Utilities.PartUtilities.GetPartCost(currentPart, _persistence);
 
                     var mvColor = "ffffff";
                     var eColor = "ffffff";
@@ -505,17 +519,17 @@ namespace Konstruction.Fabrication
                         mvColor = "ff6e69";
 
                     GUILayout.BeginHorizontal();
-                    GUILayout.Label(String.Format(currentItem.partTitle), _labelStyle, GUILayout.Width(300));
+                    GUILayout.Label(string.Format(currentItem.partTitle), _labelStyle, GUILayout.Width(300));
                     GUILayout.EndHorizontal();
 
                     GUILayout.BeginHorizontal();
-                    GUILayout.Label(String.Format("<color=#ffd900>Mass:</color>"), _labelStyle, GUILayout.Width(50));
-                    GUILayout.Label(String.Format("<color=#{0}>{1} t</color>",mvColor, currentPart.partPrefab.mass - currentPart.partPrefab.resourceMass), _labelStyle, GUILayout.Width(200));
+                    GUILayout.Label(string.Format("<color=#ffd900>Mass:</color>"), _labelStyle, GUILayout.Width(50));
+                    GUILayout.Label(string.Format("<color=#{0}>{1} t</color>",mvColor, currentPart.partPrefab.mass - currentPart.partPrefab.resourceMass), _labelStyle, GUILayout.Width(200));
                     GUILayout.EndHorizontal();
 
                     GUILayout.BeginHorizontal();
-                    GUILayout.Label(String.Format("<color=#ffd900>Volume:</color>"), _labelStyle, GUILayout.Width(50));
-                    GUILayout.Label(String.Format("<color=#{0}>{1} L</color>", mvColor,currentPart.partPrefab.FindModuleImplementing<ModuleCargoPart>().packedVolume), _labelStyle, GUILayout.Width(200));
+                    GUILayout.Label(string.Format("<color=#ffd900>Volume:</color>"), _labelStyle, GUILayout.Width(50));
+                    GUILayout.Label(string.Format("<color=#{0}>{1} L</color>", mvColor,currentPart.partPrefab.FindModuleImplementing<ModuleCargoPart>().packedVolume), _labelStyle, GUILayout.Width(200));
                     GUILayout.EndHorizontal();
 
                     foreach (var cost in costData)
@@ -528,8 +542,8 @@ namespace Konstruction.Fabrication
                             valRes = false;
                         }
                         GUILayout.BeginHorizontal();
-                        GUILayout.Label(String.Format("<color=#ffd900>Cost:</color>"), _labelStyle, GUILayout.Width(50));
-                        GUILayout.Label(String.Format("<color=#{0}>{1} {2}</color>", resColor, cost.Resource.name, cost.Quantity), _labelStyle, GUILayout.Width(200));
+                        GUILayout.Label(string.Format("<color=#ffd900>Cost:</color>"), _labelStyle, GUILayout.Width(50));
+                        GUILayout.Label(string.Format("<color=#{0}>{1} {2}</color>", resColor, cost.Resource.name, cost.Quantity), _labelStyle, GUILayout.Width(200));
                         GUILayout.EndHorizontal();
                     }
 
@@ -541,13 +555,13 @@ namespace Konstruction.Fabrication
                             BuildAThing(currentItem.partName);
                     }
                     if (!valMVIn)
-                        GUILayout.Label(String.Format("<color=#ff6e69>Engineer not present in active vessel.</color>"), _labelStyle, GUILayout.Width(350));
+                        GUILayout.Label(string.Format("<color=#ff6e69>Engineer not present in active vessel.</color>"), _labelStyle, GUILayout.Width(350));
                     if (!valMVIn)
-                        GUILayout.Label(String.Format("<color=#ff6e69>Insufficient KonFabricator capacity to build this part.</color>"), _labelStyle, GUILayout.Width(350));
+                        GUILayout.Label(string.Format("<color=#ff6e69>Insufficient KonFabricator capacity to build this part.</color>"), _labelStyle, GUILayout.Width(350));
                     if (!valMVOut)
-                        GUILayout.Label(String.Format("<color=#ff6e69>Cannot find an inventory slot that will fit this part.</color>"), _labelStyle, GUILayout.Width(350));
+                        GUILayout.Label(string.Format("<color=#ff6e69>Cannot find an inventory slot that will fit this part.</color>"), _labelStyle, GUILayout.Width(350));
                     if (!valRes)
-                        GUILayout.Label(String.Format("<color=#ff6e69>Insufficient resources.</color>"), _labelStyle, GUILayout.Width(350));
+                        GUILayout.Label(string.Format("<color=#ff6e69>Insufficient resources.</color>"), _labelStyle, GUILayout.Width(350));
 
                     GUILayout.EndVertical();
                 }
@@ -594,12 +608,16 @@ namespace Konstruction.Fabrication
 
         private void InitStyles()
         {
-            _windowStyle = new GUIStyle(HighLogic.Skin.window);
-            _windowStyle.fixedWidth = 950f;
-            _windowStyle.fixedHeight = 600f;
+            _windowStyle = new GUIStyle(HighLogic.Skin.window)
+            {
+                fixedWidth = 950f,
+                fixedHeight = 600f
+            };
             _labelStyle = new GUIStyle(HighLogic.Skin.label);
-            _centeredLabelStyle = new GUIStyle(HighLogic.Skin.label);
-            _centeredLabelStyle.alignment = TextAnchor.MiddleCenter;
+            _centeredLabelStyle = new GUIStyle(HighLogic.Skin.label)
+            {
+                alignment = TextAnchor.MiddleCenter
+            };
             _buttonStyle = new GUIStyle(HighLogic.Skin.button);
             _scrollStyle = new GUIStyle(HighLogic.Skin.scrollView);
             _hasInitStyles = true;
