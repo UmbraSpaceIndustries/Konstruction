@@ -544,7 +544,8 @@ namespace Konstruction.Fabrication
                         }
                         var qoh = Utilities.PartUtilities.GetResourceQty(cost.Resource.name);
                         GUILayout.BeginHorizontal();
-                        GUILayout.Label(String.Format("<color=#{0}>{1} {2}/{3}</color>", resColor, cost.Resource.name, qoh, cost.Quantity), _detailStyle, GUILayout.Width(250));
+                        GUILayout.Label(string.Format("<color=#ffd900>Cost:</color>"), _labelStyle, GUILayout.Width(50));
+                        GUILayout.Label(string.Format("<color=#{0}>{1} {2}</color>", resColor, cost.Resource.name, cost.Quantity), _labelStyle, GUILayout.Width(200));
                         GUILayout.EndHorizontal();
                     }
 
@@ -617,8 +618,10 @@ namespace Konstruction.Fabrication
             _labelStyle = new GUIStyle(HighLogic.Skin.label);
             _detailStyle = new GUIStyle(HighLogic.Skin.label);
             _detailStyle.fixedHeight = 20f;
-            _centeredLabelStyle = new GUIStyle(HighLogic.Skin.label);
-            _centeredLabelStyle.alignment = TextAnchor.MiddleCenter;
+            _centeredLabelStyle = new GUIStyle(HighLogic.Skin.label)
+            {
+                alignment = TextAnchor.MiddleCenter
+            };
             _buttonStyle = new GUIStyle(HighLogic.Skin.button);
             _scrollStyle = new GUIStyle(HighLogic.Skin.scrollView);
             _hasInitStyles = true;
