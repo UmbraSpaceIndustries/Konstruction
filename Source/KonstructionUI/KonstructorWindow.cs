@@ -73,6 +73,18 @@ namespace KonstructionUI
         private GameObject SelectedShipPanel;
 
         [SerializeField]
+        private Text ShipCostText;
+
+        [SerializeField]
+        private Text ShipMassText;
+
+        [SerializeField]
+        private Text ShipNameText;
+
+        [SerializeField]
+        private Image ShipThumbnail;
+
+        [SerializeField]
         private Text TitleBarText;
 
         public Canvas Canvas
@@ -250,6 +262,25 @@ namespace KonstructionUI
 
             if (SelectedShipPanel != null)
             {
+                if (ShipCostText != null)
+                {
+                    ShipCostText.text = shipMetadata.Cost;
+                }
+                if (ShipMassText != null)
+                {
+                    ShipMassText.text = shipMetadata.Mass;
+                }
+                if (ShipNameText != null)
+                {
+                    ShipNameText.text = shipMetadata.Name;
+                }
+                if (ShipThumbnail != null)
+                {
+                    ShipThumbnail.sprite = Sprite.Create(
+                        shipMetadata.Thumbnail,
+                        new Rect(0f, 0f, 256f, 256f),
+                        Vector2.zero);
+                }
                 if (!shipMetadata.KonstructorMetadata.CanSpawn)
                 {
                     DisableBuildButton();

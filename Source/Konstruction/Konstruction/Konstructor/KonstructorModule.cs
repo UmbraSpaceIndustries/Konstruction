@@ -13,13 +13,17 @@ namespace Konstruction
     public class KonstructorModule : PartModule, IKonstructor
     {
         private List<CostData> _cachedCostData;
+        private float _cachedDryMass;
+        private float _cachedFundsCost;
         private ProtoVessel _cachedProtoVessel;
         private Dictionary<string, KonstructorResourceMetadata> _cachedResources;
+        private Texture2D _cachedThumbnail;
         private ConfigNode _craftConfigNode;
         private string _invalidVesselErrorText;
         private double _nextRefreshTime;
         private string _selectedCraftFilePath;
         private KonstructionScenario _scenario;
+        private ThumbnailService _thumbnailService;
         private string _unavailablePartsErrorText;
         private KonstructorWindow _window;
 
@@ -59,12 +63,19 @@ namespace Konstruction
         {
             var cachedConstruct = ShipConstruction.ShipConfig;
 
-            var protoVessel = new ProtoVessel(new ConfigNode(), null);
-            var vessel = new GameObject().AddComponent<Vessel>();
             var construct = ShipConstruction.LoadShip(_selectedCraftFilePath);
+            construct.GetShipCosts(out _cachedFundsCost, out _);
+            construct.GetShipMass(out _cachedDryMass, out _);
+            _cachedThumbnail = _thumbnailService.GetShipThumbnail(construct);
+
+            var vessel = new GameObject().AddComponent<Vessel>();
             vessel.parts = construct.parts;
-            protoVessel.vesselName = construct.shipName;
-            protoVessel.vesselRef = vessel;
+
+            var protoVessel = new ProtoVessel(new ConfigNode(), null)
+            {
+                vesselName = construct.shipName,
+                vesselRef = vessel
+            };
 
             ShipConstruction.ShipConfig = cachedConstruct;
 
@@ -267,6 +278,7 @@ namespace Konstruction
             GetLocalizedPropertyValues();
 
             _scenario = FindObjectOfType<KonstructionScenario>();
+            _thumbnailService = _scenario.ServiceManager.GetService<ThumbnailService>();
             var windowManager = _scenario.ServiceManager.GetService<WindowManager>();
             _window = windowManager.GetWindow<KonstructorWindow>();
 
@@ -309,6 +321,8 @@ namespace Konstruction
             {
                 throw new Exception("Select a vessel first!");
             }
+
+            PartUtilities.ConsumeResources(_cachedCostData);
 
             var orbit = new Orbit(FlightGlobals.ActiveVessel.orbit);
             var randomOrbit = Orbit.CreateRandomOrbitNearby(orbit);
@@ -371,7 +385,12 @@ namespace Konstruction
 
             var konstructorMetadata = new KonstructorMetadata(partResources);
             var shipName = Localizer.Format(_craftConfigNode.GetValue("ship"));
-            var shipMetadata = new ShipMetadata(shipName, konstructorMetadata);
+            var shipMetadata = new ShipMetadata(
+                shipName,
+                $"Dry mass: {_cachedDryMass:N1} t",
+                $"Dry cost: {_cachedFundsCost:N0}",
+                konstructorMetadata,
+                _cachedThumbnail);
             _window.ShipSelected(shipMetadata);
         }
     }

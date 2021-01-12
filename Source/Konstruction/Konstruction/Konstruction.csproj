@@ -117,6 +117,7 @@
     <Compile Include="Settings\KonstructionModuleResource.cs" />
     <Compile Include="Settings\KonstructionPersistance.cs" />
     <Compile Include="Settings\KonstructionScenario.cs" />
+    <Compile Include="Utilities\ThumbnailService.cs" />
     <Compile Include="Welding\ModuleWeldablePort.cs" />
     <Compile Include="Welding\NodeUtilities.cs" />
     <Compile Include="Robotics\ServoData.cs" />

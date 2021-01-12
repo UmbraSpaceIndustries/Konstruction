@@ -1,4 +1,5 @@
-﻿using KonstructionUI;
+﻿using Konstruction.Utilities;
+using KonstructionUI;
 using System;
 using UnityEngine;
 using USITools;
@@ -30,6 +31,7 @@ namespace Konstruction
                     // Setup dependency injection for Konstruction services
                     var serviceCollection = usiTools.ServiceCollection;
                     serviceCollection.AddSingletonService<KonstructionPersistance>();
+                    serviceCollection.AddSingletonService<ThumbnailService>();
                     serviceCollection.AddSingletonService<WindowManager>();
 
                     // Setup UI prefabs
