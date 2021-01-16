@@ -20,6 +20,8 @@ namespace Konstruction
         private Dictionary<string, KonstructorResourceMetadata> _cachedResources;
         private Texture2D _cachedThumbnail;
         private ConfigNode _craftConfigNode;
+        private string _dryCostText;
+        private string _dryMassText;
         private string _invalidVesselErrorText;
         private string _nearbyVesselsErrorText;
         private double _nextRefreshTime;
@@ -162,6 +164,18 @@ namespace Konstruction
                 out string column3Instructions))
             {
                 Column3Instructions = column3Instructions;
+            }
+            if (Localizer.TryGetStringByTag(
+                "#LOC_USI_Konstructor_DryCostText",
+                out string dryCostText))
+            {
+                _dryCostText = dryCostText;
+            }
+            if (Localizer.TryGetStringByTag(
+                "#LOC_USI_Konstructor_DryMassText",
+                out string dryMassText))
+            {
+                _dryMassText = dryMassText;
             }
             if (Localizer.TryGetStringByTag(
                 "#LOC_USI_Konstructor_InsufficientResourcesErrorText",
@@ -435,8 +449,8 @@ namespace Konstruction
             var shipName = Localizer.Format(_craftConfigNode.GetValue("ship"));
             var shipMetadata = new ShipMetadata(
                 shipName,
-                $"Dry mass: {_cachedDryMass:N1} t",
-                $"Dry cost: {_cachedFundsCost:N0}",
+                $"{_dryMassText}: {_cachedDryMass:N1} t",
+                $"{_dryCostText}: {_cachedFundsCost:N0}",
                 konstructorMetadata,
                 _cachedThumbnail);
             _window.ShipSelected(shipMetadata);
