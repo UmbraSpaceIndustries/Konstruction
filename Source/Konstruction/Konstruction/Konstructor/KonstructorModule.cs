@@ -6,6 +6,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
+using USITools;
 
 namespace Konstruction
 {
@@ -20,7 +21,10 @@ namespace Konstruction
         private Texture2D _cachedThumbnail;
         private ConfigNode _craftConfigNode;
         private string _invalidVesselErrorText;
+        private string _nearbyVesselsErrorText;
         private double _nextRefreshTime;
+        private string _notInOrbitErrorText;
+        private string _noVesselSelectedErrorText;
         private string _selectedCraftFilePath;
         private KonstructionScenario _scenario;
         private ThumbnailService _thumbnailService;
@@ -56,7 +60,10 @@ namespace Konstruction
             guiActiveEditor = false)]
         public void ShowWindow()
         {
-            _window.ShowWindow();
+            if (_window != null)
+            {
+                _window.ShowWindow();
+            }
         }
 
         private ProtoVessel CreateProtoVessel()
@@ -169,6 +176,24 @@ namespace Konstruction
                 _invalidVesselErrorText = invalidVesselErrorText;
             }
             if (Localizer.TryGetStringByTag(
+                "#LOC_USI_Konstructor_NearbyVesselsErrorText",
+                out string nearbyVesselsErrorText))
+            {
+                _nearbyVesselsErrorText = nearbyVesselsErrorText;
+            }
+            if (Localizer.TryGetStringByTag(
+                "#LOC_USI_Konstructor_NotInOrbitErrorText",
+                out string notInOrbitErrorText))
+            {
+                _notInOrbitErrorText = notInOrbitErrorText;
+            }
+            if (Localizer.TryGetStringByTag(
+                "#LOC_USI_Konstructor_NoVesselSelectedErrorText",
+                out string noVesselSelectedErrorText))
+            {
+                _noVesselSelectedErrorText = noVesselSelectedErrorText;
+            }
+            if (Localizer.TryGetStringByTag(
                 "#LOC_USI_Konstructor_RequiredAmountHeaderText",
                 out string requiredAmountHeaderText))
             {
@@ -278,11 +303,14 @@ namespace Konstruction
             GetLocalizedPropertyValues();
 
             _scenario = FindObjectOfType<KonstructionScenario>();
-            _thumbnailService = _scenario.ServiceManager.GetService<ThumbnailService>();
-            var windowManager = _scenario.ServiceManager.GetService<WindowManager>();
-            _window = windowManager.GetWindow<KonstructorWindow>();
+            if (_scenario != null)
+            {
+                _thumbnailService = _scenario.ServiceManager.GetService<ThumbnailService>();
+                var windowManager = _scenario.ServiceManager.GetService<WindowManager>();
+                _window = windowManager.GetWindow<KonstructorWindow>();
 
-            _window.Initialize(this, windowManager);
+                _window.Initialize(this, windowManager);
+            }
         }
 
         public override void OnUpdate()
@@ -297,7 +325,10 @@ namespace Konstruction
             }
 
             GetResourceCosts();
-            _window.UpdateResources();
+            if (_window != null)
+            {
+                _window.UpdateResources();
+            }
         }
 
         public void ShowShipSelector()
@@ -314,19 +345,34 @@ namespace Konstruction
         {
             if (FlightGlobals.ActiveVessel.situation != Vessel.Situations.ORBITING)
             {
-                throw new Exception("Konstructor must be in orbit to spawn new vessels.");
+                throw new Exception(_notInOrbitErrorText);
             }
 
             if (string.IsNullOrEmpty(_selectedCraftFilePath))
             {
-                throw new Exception("Select a vessel first!");
+                throw new Exception(_noVesselSelectedErrorText);
+            }
+
+            if (LogisticsTools.AnyNearbyVessels(100d, FlightGlobals.ActiveVessel))
+            {
+                throw new Exception(_nearbyVesselsErrorText);
             }
 
             PartUtilities.ConsumeResources(_cachedCostData);
 
-            var orbit = new Orbit(FlightGlobals.ActiveVessel.orbit);
-            var randomOrbit = Orbit.CreateRandomOrbitNearby(orbit);
-            orbit.meanAnomalyAtEpoch = randomOrbit.meanAnomalyAtEpoch;
+            var vesselOrbit = FlightGlobals.ActiveVessel.orbit;
+            var now = Planetarium.GetUniversalTime();
+            vesselOrbit.GetOrbitalStateVectorsAtUT(
+                now,
+                out Vector3d position,
+                out Vector3d velocity);
+            position.x += 50d;
+            var orbit = new Orbit(vesselOrbit);
+            orbit.UpdateFromStateVectors(
+                position,
+                velocity,
+                vesselOrbit.referenceBody,
+                now);
 
             var partNodes = _cachedProtoVessel.protoPartSnapshots
                 .Select(s =>
@@ -351,6 +397,8 @@ namespace Konstruction
 
             var spawnedVessel = FlightGlobals.Vessels.Last();
             spawnedVessel.currentStage = 1;
+
+            _window.CloseWindow();
         }
 
         private void VesselSelected(string filePath, CraftBrowserDialog.LoadType loadType)

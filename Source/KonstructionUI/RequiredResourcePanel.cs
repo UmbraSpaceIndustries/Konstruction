@@ -30,16 +30,15 @@ namespace KonstructionUI
             }
             if (AvailableAmountText != null)
             {
-                var diff = resource.Available - resource.Needed;
-                if (diff < 0.0001d)
+                if (resource.Available - resource.Needed < 0.0001d)
                 {
                     AvailableAmountText.color = _insufficientColor;
-                    AvailableAmountText.text = $"{resource.Available:N0} ({diff:N0})";
+                    AvailableAmountText.text = $"{resource.Available:N1}";
                 }
                 else
                 {
                     AvailableAmountText.color = _defaultColor;
-                    AvailableAmountText.text = $"{resource.Available:N0}";
+                    AvailableAmountText.text = $"{resource.Available:N1}";
                 }
             }
         }

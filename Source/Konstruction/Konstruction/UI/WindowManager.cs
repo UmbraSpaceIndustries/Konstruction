@@ -9,6 +9,24 @@ namespace Konstruction
     {
         private readonly Dictionary<Type, GameObject> _windows
             = new Dictionary<Type, GameObject>();
+        private readonly EventData<GameScenes>.OnEvent _sceneChangeDelegate;
+
+        public WindowManager()
+        {
+            _sceneChangeDelegate = new EventData<GameScenes>.OnEvent(CloseWindows);
+            GameEvents.onGameSceneLoadRequested.Add(_sceneChangeDelegate);
+        }
+
+        public void CloseWindows(GameScenes target)
+        {
+            foreach (var window in _windows)
+            {
+                if (window.Value.activeSelf)
+                {
+                    window.Value.SetActive(false);
+                }
+            }
+        }
 
         public T GetWindow<T>()
         {

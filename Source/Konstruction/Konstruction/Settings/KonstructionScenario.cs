@@ -8,9 +8,7 @@ namespace Konstruction
 {
     [KSPScenario(
         ScenarioCreationOptions.AddToAllGames,
-        GameScenes.EDITOR,
-        GameScenes.FLIGHT,
-        GameScenes.SPACECENTER)]
+        GameScenes.FLIGHT)]
     public class KonstructionScenario : ScenarioModule
     {
         public GameObject KonstructorResourcePanelPrefab { get; private set; }
