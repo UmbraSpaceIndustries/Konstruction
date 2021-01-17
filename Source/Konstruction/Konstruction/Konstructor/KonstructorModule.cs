@@ -22,7 +22,9 @@ namespace Konstruction
         private ConfigNode _craftConfigNode;
         private string _dryCostText;
         private string _dryMassText;
+        private bool _hasLaunchClamp;
         private string _invalidVesselErrorText;
+        private string _launchClampErrorText;
         private string _nearbyVesselsErrorText;
         private double _nextRefreshTime;
         private string _notInOrbitErrorText;
@@ -91,8 +93,11 @@ namespace Konstruction
             var launchId = HighLogic.CurrentGame.launchID++;
             var missionId = (uint)Guid.NewGuid().GetHashCode();
             var rootPart = construct.parts.First();
+            _hasLaunchClamp = false;
             foreach (var part in construct.parts)
             {
+                _hasLaunchClamp |= part.HasModuleImplementing<LaunchClamp>();
+
                 part.flagURL = construct.missionFlag ?? HighLogic.CurrentGame.flagURL;
                 part.flightID = ShipConstruction.GetUniqueFlightID(HighLogic.CurrentGame.flightState);
                 part.launchID = launchId;
@@ -188,6 +193,12 @@ namespace Konstruction
                 out string invalidVesselErrorText))
             {
                 _invalidVesselErrorText = invalidVesselErrorText;
+            }
+            if (Localizer.TryGetStringByTag(
+                "#LOC_USI_Konstructor_LaunchClampErrorText",
+                out string launchClampErrorText))
+            {
+                _launchClampErrorText = launchClampErrorText;
             }
             if (Localizer.TryGetStringByTag(
                 "#LOC_USI_Konstructor_NearbyVesselsErrorText",
@@ -438,6 +449,11 @@ namespace Konstruction
             if (protoVessel == null)
             {
                 _window.ShowAlert(_invalidVesselErrorText);
+                return;
+            }
+            else if (_hasLaunchClamp)
+            {
+                _window.ShowAlert(_launchClampErrorText);
                 return;
             }
             _cachedProtoVessel = protoVessel;
