@@ -28,6 +28,7 @@ namespace Konstruction.Fabrication
         private Rect _windowPosition = new Rect(300, 60, 950, 600);
         private GUIStyle _windowStyle;
         private GUIStyle _labelStyle;
+        private GUIStyle _detailStyle;
         private GUIStyle _buttonStyle;
         private GUIStyle _scrollStyle;
         private GUIStyle _centeredLabelStyle;
@@ -541,13 +542,13 @@ namespace Konstruction.Fabrication
                             resColor = "ff6e69";
                             valRes = false;
                         }
+                        var qoh = Utilities.PartUtilities.GetResourceQty(cost.Resource.name);
                         GUILayout.BeginHorizontal();
-                        GUILayout.Label(string.Format("<color=#ffd900>Cost:</color>"), _labelStyle, GUILayout.Width(50));
-                        GUILayout.Label(string.Format("<color=#{0}>{1} {2}</color>", resColor, cost.Resource.name, cost.Quantity), _labelStyle, GUILayout.Width(200));
+                        GUILayout.Label(String.Format("<color=#{0}>{1} {2}/{3}</color>", resColor, cost.Resource.name, qoh, cost.Quantity), _detailStyle, GUILayout.Width(250));
                         GUILayout.EndHorizontal();
                     }
 
-                    GUILayout.Box(thumbTexture);
+                    GUILayout.Box(thumbTexture, GUILayout.Height(100));
 
                     if (valRes && valMVIn && valMVOut)
                     {
@@ -614,10 +615,10 @@ namespace Konstruction.Fabrication
                 fixedHeight = 600f
             };
             _labelStyle = new GUIStyle(HighLogic.Skin.label);
-            _centeredLabelStyle = new GUIStyle(HighLogic.Skin.label)
-            {
-                alignment = TextAnchor.MiddleCenter
-            };
+            _detailStyle = new GUIStyle(HighLogic.Skin.label);
+            _detailStyle.fixedHeight = 20f;
+            _centeredLabelStyle = new GUIStyle(HighLogic.Skin.label);
+            _centeredLabelStyle.alignment = TextAnchor.MiddleCenter;
             _buttonStyle = new GUIStyle(HighLogic.Skin.button);
             _scrollStyle = new GUIStyle(HighLogic.Skin.scrollView);
             _hasInitStyles = true;

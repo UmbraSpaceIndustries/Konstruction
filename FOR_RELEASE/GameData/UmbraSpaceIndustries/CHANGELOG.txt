@@ -2,6 +2,8 @@
 ------------------
 All KIS Kontainers have been deprecated and replaced with stock inventory
 Round and cylindrical tanks now have attachment points on all four sides
+Added Oxidizer as a cargo option
+Increased compression of LqdHydrogen to 10:1
 
 1.4.0 - 2020.12.20
 ------------------
