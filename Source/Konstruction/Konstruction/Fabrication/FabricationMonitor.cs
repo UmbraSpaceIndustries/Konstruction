@@ -544,8 +544,7 @@ namespace Konstruction.Fabrication
                         }
                         var qoh = Utilities.PartUtilities.GetResourceQty(cost.Resource.name);
                         GUILayout.BeginHorizontal();
-                        GUILayout.Label(string.Format("<color=#ffd900>Cost:</color>"), _labelStyle, GUILayout.Width(50));
-                        GUILayout.Label(string.Format("<color=#{0}>{1} {2}</color>", resColor, cost.Resource.name, cost.Quantity), _labelStyle, GUILayout.Width(200));
+                        GUILayout.Label(String.Format("<color=#{0}>{1} {2}/{3}</color>", resColor, cost.Resource.name, qoh, cost.Quantity), _detailStyle, GUILayout.Width(250));
                         GUILayout.EndHorizontal();
                     }
 
