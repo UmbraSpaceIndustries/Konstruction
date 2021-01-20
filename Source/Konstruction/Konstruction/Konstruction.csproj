@@ -55,6 +55,10 @@
       <HintPath>..\..\..\..\..\KSP_DEV\KSP_x64_Data\Managed\UnityEngine.AnimationModule.dll</HintPath>
       <Private>False</Private>
     </Reference>
+    <Reference Include="UnityEngine.AssetBundleModule">
+      <HintPath>..\..\..\..\..\KSP_DEV\KSP_x64_Data\Managed\UnityEngine.AssetBundleModule.dll</HintPath>
+      <Private>False</Private>
+    </Reference>
     <Reference Include="UnityEngine.CoreModule">
       <HintPath>..\..\..\..\..\KSP_DEV\KSP_x64_Data\Managed\UnityEngine.CoreModule.dll</HintPath>
       <Private>False</Private>
@@ -80,14 +84,22 @@
       <HintPath>..\..\..\..\..\KSP_DEV\KSP_x64_Data\Managed\UnityEngine.UI.dll</HintPath>
       <Private>False</Private>
     </Reference>
+    <Reference Include="UnityEngine.UIModule">
+      <HintPath>..\..\..\..\..\KSP_DEV\KSP_x64_Data\Managed\UnityEngine.UIModule.dll</HintPath>
+      <Private>False</Private>
+    </Reference>
     <Reference Include="USITools">
       <HintPath>..\..\..\..\..\KSP_DEV\GameData\000_USITools\USITools.dll</HintPath>
       <Private>False</Private>
     </Reference>
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="Konstructor\AbstractKonstructorModule.cs" />
     <Compile Include="Fabrication\FabricationMonitor.cs" />
     <Compile Include="Fabrication\ModuleFabricatorPart.cs" />
+    <Compile Include="Konstructor\GroundKonstructorModule.cs" />
+    <Compile Include="Konstructor\OrbitalKonstructorModule.cs" />
+    <Compile Include="UI\WindowManager.cs" />
     <Compile Include="Utilities\PartUtilities.cs" />
     <Compile Include="Misc\ModuleConstructedPart.cs" />
     <Compile Include="Misc\ModuleCounterweight.cs" />
@@ -102,13 +114,12 @@
     <Compile Include="Robotics\ModuleServo.cs" />
     <Compile Include="Robotics\ModuleServoConfig.cs" />
     <Compile Include="Robotics\ModuleServoGroup.cs" />
-    <Compile Include="Settings\AddScenarioModules.cs" />
     <Compile Include="Settings\KonstructionConfig.cs" />
     <Compile Include="Settings\KonstructionCostResource.cs" />
-    <Compile Include="Settings\KonstructionManager.cs" />
     <Compile Include="Settings\KonstructionModuleResource.cs" />
     <Compile Include="Settings\KonstructionPersistance.cs" />
     <Compile Include="Settings\KonstructionScenario.cs" />
+    <Compile Include="Utilities\ThumbnailService.cs" />
     <Compile Include="Welding\ModuleWeldablePort.cs" />
     <Compile Include="Welding\NodeUtilities.cs" />
     <Compile Include="Robotics\ServoData.cs" />
@@ -118,6 +129,12 @@
   </ItemGroup>
   <ItemGroup>
     <Folder Include="Properties\" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\..\KonstructionUI\KonstructionUI.csproj">
+      <Project>{d487f008-632d-41c3-8827-7711eae23d15}</Project>
+      <Name>KonstructionUI</Name>
+    </ProjectReference>
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <PropertyGroup>
