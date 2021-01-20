@@ -6,34 +6,29 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
-using USITools;
 
 namespace Konstruction
 {
-    [KSPModule("Konstructor")]
-    public class KonstructorModule : PartModule, IKonstructor
+    public abstract class AbstractKonstructorModule : PartModule, IKonstructor
     {
-        private List<CostData> _cachedCostData;
-        private float _cachedDryMass;
-        private float _cachedFundsCost;
-        private ProtoVessel _cachedProtoVessel;
-        private Dictionary<string, KonstructorResourceMetadata> _cachedResources;
-        private Texture2D _cachedThumbnail;
-        private ConfigNode _craftConfigNode;
-        private string _dryCostText;
-        private string _dryMassText;
-        private bool _hasLaunchClamp;
-        private string _invalidVesselErrorText;
-        private string _launchClampErrorText;
-        private string _nearbyVesselsErrorText;
+        protected List<CostData> _cachedCostData;
+        protected float _cachedDryMass;
+        protected float _cachedFundsCost;
+        protected ProtoVessel _cachedProtoVessel;
+        protected Dictionary<string, KonstructorResourceMetadata> _cachedResources;
+        protected Texture2D _cachedThumbnail;
+        protected ConfigNode _craftConfigNode;
+        protected string _dryCostText;
+        protected string _dryMassText;
+        protected bool _hasLaunchClamp;
+        protected string _invalidVesselErrorText;
         private double _nextRefreshTime;
-        private string _notInOrbitErrorText;
-        private string _noVesselSelectedErrorText;
-        private string _selectedCraftFilePath;
+        protected string _noVesselSelectedErrorText;
+        protected string _selectedCraftFilePath;
         private KonstructionScenario _scenario;
         private ThumbnailService _thumbnailService;
-        private string _unavailablePartsErrorText;
-        private KonstructorWindow _window;
+        protected string _unavailablePartsErrorText;
+        protected KonstructorWindow _window;
 
         public string AvailableAmountHeaderText { get; private set; }
         public string BuildShipButtonText { get; private set; }
@@ -70,57 +65,89 @@ namespace Konstruction
             }
         }
 
-        private ProtoVessel CreateProtoVessel()
+        protected ProtoVessel CreateProtoVessel()
         {
-            var cachedConstruct = ShipConstruction.ShipConfig;
-
-            var construct = ShipConstruction.LoadShip(_selectedCraftFilePath);
-            construct.GetShipCosts(out _cachedFundsCost, out _);
-            construct.GetShipMass(out _cachedDryMass, out _);
-            _cachedThumbnail = _thumbnailService.GetShipThumbnail(construct);
-
-            var vessel = new GameObject().AddComponent<Vessel>();
-            vessel.parts = construct.parts;
-
-            var protoVessel = new ProtoVessel(new ConfigNode(), null)
+            ShipConstruct construct = null;
+            ProtoVessel protoVessel = null;
+            Vessel vessel = null;
+            try
             {
-                vesselName = construct.shipName,
-                vesselRef = vessel
-            };
+                // Cache the ship config from the VAB/SPH, load the selected .craft file
+                //   and restore the cached config from the VAB/SPH
+                var cachedConstruct = ShipConstruction.ShipConfig;
+                construct = ShipConstruction.LoadShip(_selectedCraftFilePath);
+                ShipConstruction.ShipConfig = cachedConstruct;
 
-            ShipConstruction.ShipConfig = cachedConstruct;
+                // Calculate vessel cost and mass and generate a thumbnail
+                construct.GetShipCosts(out _cachedFundsCost, out _);
+                construct.GetShipMass(out _cachedDryMass, out _);
+                _cachedThumbnail = _thumbnailService.GetShipThumbnail(construct);
 
-            var launchId = HighLogic.CurrentGame.launchID++;
-            var missionId = (uint)Guid.NewGuid().GetHashCode();
-            var rootPart = construct.parts.First();
-            _hasLaunchClamp = false;
-            foreach (var part in construct.parts)
-            {
-                _hasLaunchClamp |= part.HasModuleImplementing<LaunchClamp>();
+                // Create an emtpy Vessel and copy the parts from the loaded .craft file
+                vessel = new GameObject().AddComponent<Vessel>();
+                vessel.parts = construct.parts;
 
-                part.flagURL = construct.missionFlag ?? HighLogic.CurrentGame.flagURL;
-                part.flightID = ShipConstruction.GetUniqueFlightID(HighLogic.CurrentGame.flightState);
-                part.launchID = launchId;
-                part.missionID = missionId;
-                part.temperature = Math.Abs(part.temperature);
-                part.UpdateOrgPosAndRot(rootPart);
+                // Create an empty ProtoVessel that we'll ultimately use to create the template
+                //   for the vessel to be spawned in-game later
+                protoVessel = new ProtoVessel(new ConfigNode(), null)
+                {
+                    vesselName = construct.shipName,
+                    vesselRef = vessel
+                };
 
-                part.vessel = vessel;
-                protoVessel.protoPartSnapshots.Add(new ProtoPartSnapshot(part, protoVessel));
+                // Setup necessary Vessel and Part parameters for the template (also check for launch clamps)
+                var launchId = HighLogic.CurrentGame.launchID++;
+                var missionId = (uint)Guid.NewGuid().GetHashCode();
+                var rootPart = construct.parts.First();
+                _hasLaunchClamp = false;
+                foreach (var part in construct.parts)
+                {
+                    _hasLaunchClamp |= part.HasModuleImplementing<LaunchClamp>();
 
-                Destroy(part.gameObject);
+                    part.flagURL = construct.missionFlag ?? HighLogic.CurrentGame.flagURL;
+                    part.flightID = ShipConstruction.GetUniqueFlightID(HighLogic.CurrentGame.flightState);
+                    part.launchID = launchId;
+                    part.missionID = missionId;
+                    part.temperature = Math.Abs(part.temperature);
+                    part.UpdateOrgPosAndRot(rootPart);
+
+                    part.vessel = vessel;
+                    protoVessel.protoPartSnapshots.Add(new ProtoPartSnapshot(part, protoVessel));
+                }
+                foreach (var snapshot in protoVessel.protoPartSnapshots)
+                {
+                    snapshot.storePartRefs();
+                }
+
+                // Cache the ProtoVessel to use as the template for spawning the vessel later
+                _cachedProtoVessel = protoVessel;
             }
-            foreach (var snapshot in protoVessel.protoPartSnapshots)
+            catch (Exception ex)
             {
-                snapshot.storePartRefs();
+                Debug.LogException(ex);
             }
-            Destroy(vessel.gameObject);
+            finally
+            {
+                // ShipConstruction.LoadShip seems to load in all the part meshes for the vessel
+                //   (presumably for use in the VAB/SPH), so we need to destroy them
+                if (construct != null && construct.parts != null && construct.parts.Count > 0)
+                {
+                    foreach (var part in construct.parts)
+                    {
+                        Destroy(part.gameObject);
+                    }
+                }
+                // Destroy the temporary Vessel we created as well
+                if (vessel != null)
+                {
+                    Destroy(vessel.gameObject);
+                }
+            }
 
-            _cachedProtoVessel = protoVessel;
             return protoVessel;
         }
 
-        private void GetLocalizedPropertyValues()
+        protected virtual void GetLocalizedPropertyValues()
         {
             if (Localizer.TryGetStringByTag(
                 "#LOC_USI_Konstructor_AvailableAmountHeaderText",
@@ -195,24 +222,6 @@ namespace Konstruction
                 _invalidVesselErrorText = invalidVesselErrorText;
             }
             if (Localizer.TryGetStringByTag(
-                "#LOC_USI_Konstructor_LaunchClampErrorText",
-                out string launchClampErrorText))
-            {
-                _launchClampErrorText = launchClampErrorText;
-            }
-            if (Localizer.TryGetStringByTag(
-                "#LOC_USI_Konstructor_NearbyVesselsErrorText",
-                out string nearbyVesselsErrorText))
-            {
-                _nearbyVesselsErrorText = nearbyVesselsErrorText;
-            }
-            if (Localizer.TryGetStringByTag(
-                "#LOC_USI_Konstructor_NotInOrbitErrorText",
-                out string notInOrbitErrorText))
-            {
-                _notInOrbitErrorText = notInOrbitErrorText;
-            }
-            if (Localizer.TryGetStringByTag(
                 "#LOC_USI_Konstructor_NoVesselSelectedErrorText",
                 out string noVesselSelectedErrorText))
             {
@@ -262,7 +271,7 @@ namespace Konstruction
             }
         }
 
-        private List<KonstructorResourceMetadata> GetResourceCosts()
+        protected List<KonstructorResourceMetadata> GetResourceCosts()
         {
             if (_cachedProtoVessel == null)
             {
@@ -366,110 +375,8 @@ namespace Konstruction
                 showMergeOption: false);
         }
 
-        public void SpawnVessel()
-        {
-            if (FlightGlobals.ActiveVessel.situation != Vessel.Situations.ORBITING)
-            {
-                throw new Exception(_notInOrbitErrorText);
-            }
+        public abstract void SpawnVessel();
 
-            if (string.IsNullOrEmpty(_selectedCraftFilePath))
-            {
-                throw new Exception(_noVesselSelectedErrorText);
-            }
-
-            if (LogisticsTools.AnyNearbyVessels(100d, FlightGlobals.ActiveVessel))
-            {
-                throw new Exception(_nearbyVesselsErrorText);
-            }
-
-            PartUtilities.ConsumeResources(_cachedCostData);
-
-            var vesselOrbit = FlightGlobals.ActiveVessel.orbit;
-            var now = Planetarium.GetUniversalTime();
-            vesselOrbit.GetOrbitalStateVectorsAtUT(
-                now,
-                out Vector3d position,
-                out Vector3d velocity);
-            position.x += 50d;
-            var orbit = new Orbit(vesselOrbit);
-            orbit.UpdateFromStateVectors(
-                position,
-                velocity,
-                vesselOrbit.referenceBody,
-                now);
-
-            var partNodes = _cachedProtoVessel.protoPartSnapshots
-                .Select(s =>
-                {
-                    var node = new ConfigNode("PART");
-                    s.Save(node);
-                    return node;
-                })
-                .ToArray();
-            var type = VesselType.Ship;
-            _craftConfigNode.TryGetEnum("type", ref type, VesselType.Ship);
-
-            var vesselConfigNode = ProtoVessel.CreateVesselNode(
-                _cachedProtoVessel.GetDisplayName(),
-                type,
-                orbit,
-                0,
-                partNodes);
-
-            var spawnedProtoVessel = new ProtoVessel(vesselConfigNode, HighLogic.CurrentGame);
-            spawnedProtoVessel.Load(HighLogic.CurrentGame.flightState);
-
-            var spawnedVessel = FlightGlobals.Vessels.Last();
-            spawnedVessel.currentStage = 1;
-
-            _window.CloseWindow();
-        }
-
-        private void VesselSelected(string filePath, CraftBrowserDialog.LoadType loadType)
-        {
-            _selectedCraftFilePath = filePath;
-            _craftConfigNode = ConfigNode.Load(filePath);
-            if (_craftConfigNode == null || _craftConfigNode.CountNodes < 1)
-            {
-                _window.ShowAlert(_invalidVesselErrorText);
-                return;
-            }
-
-            var error = string.Empty;
-            if (!ShipConstruction.AllPartsFound(_craftConfigNode, ref error))
-            {
-                Debug.LogError($"[KONSTRUCTION] Failed to load vessel at {_selectedCraftFilePath}");
-                Debug.LogError($"[KONSTRUCTION] {error}");
-                _window.ShowAlert(_unavailablePartsErrorText);
-                return;
-            }
-
-            var protoVessel = CreateProtoVessel();
-            if (protoVessel == null)
-            {
-                _window.ShowAlert(_invalidVesselErrorText);
-                return;
-            }
-            else if (_hasLaunchClamp)
-            {
-                _window.ShowAlert(_launchClampErrorText);
-                return;
-            }
-            _cachedProtoVessel = protoVessel;
-            _cachedCostData = null;
-
-            var partResources = GetResourceCosts();
-
-            var konstructorMetadata = new KonstructorMetadata(partResources);
-            var shipName = Localizer.Format(_craftConfigNode.GetValue("ship"));
-            var shipMetadata = new ShipMetadata(
-                shipName,
-                $"{_dryMassText}: {_cachedDryMass:N1} t",
-                $"{_dryCostText}: {_cachedFundsCost:N0}",
-                konstructorMetadata,
-                _cachedThumbnail);
-            _window.ShipSelected(shipMetadata);
-        }
+        protected abstract void VesselSelected(string filePath, CraftBrowserDialog.LoadType loadType);
     }
 }

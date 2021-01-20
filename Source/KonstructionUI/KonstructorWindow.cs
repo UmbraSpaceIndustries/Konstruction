@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Linq;
 using UnityEngine;
 using UnityEngine.UI;
 
@@ -125,6 +126,19 @@ namespace KonstructionUI
                 {
                     ShowAlert(ex.Message);
                 }
+            }
+        }
+
+        private void ClearResources()
+        {
+            if (_resourcePanels.Count > 0)
+            {
+                var panels = _resourcePanels.Select(p => p.Value).ToArray();
+                for (int i = 0; i < panels.Length; i++)
+                {
+                    Destroy(panels[i].gameObject);
+                }
+                _resourcePanels.Clear();
             }
         }
 
@@ -260,7 +274,7 @@ namespace KonstructionUI
         {
             _shipMetadata = shipMetadata;
 
-            if (SelectedShipPanel != null)
+            if (shipMetadata != null && SelectedShipPanel != null)
             {
                 if (ShipCostText != null)
                 {
@@ -292,6 +306,7 @@ namespace KonstructionUI
                 }
 
                 ShowColumns();
+                ClearResources();
                 UpdateResources();
 
                 if (!SelectedShipPanel.activeSelf)
