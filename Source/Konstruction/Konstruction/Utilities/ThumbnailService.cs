@@ -11,11 +11,10 @@ namespace Konstruction.Utilities
 
         private Texture2D CreateThumbnail(ShipConstruct ship)
         {
-            var folderPath = Path.Combine(KSPUtil.ApplicationRootPath, "thumbs");
+            var folderPath = "thumbs";
             CraftThumbnail.TakeSnaphot(ship, 256, folderPath, ship.shipName);
-            var fileName
-                = $"{HighLogic.SaveFolder}_{ship.shipFacility}_{ship.shipName}.png";
-            var filePath = Path.Combine(folderPath, fileName);
+            var fileName = $"{ship.shipName}.png";
+            var filePath = Path.Combine(KSPUtil.ApplicationRootPath, folderPath, fileName);
             _fileNameCache.Add(ship.shipName, filePath);
             return LoadThumbnail(filePath);
         }
