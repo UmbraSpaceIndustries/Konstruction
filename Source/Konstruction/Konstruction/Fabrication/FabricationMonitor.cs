@@ -617,8 +617,10 @@ namespace Konstruction.Fabrication
             _labelStyle = new GUIStyle(HighLogic.Skin.label);
             _detailStyle = new GUIStyle(HighLogic.Skin.label);
             _detailStyle.fixedHeight = 20f;
-            _centeredLabelStyle = new GUIStyle(HighLogic.Skin.label);
-            _centeredLabelStyle.alignment = TextAnchor.MiddleCenter;
+            _centeredLabelStyle = new GUIStyle(HighLogic.Skin.label)
+            {
+                alignment = TextAnchor.MiddleCenter
+            };
             _buttonStyle = new GUIStyle(HighLogic.Skin.button);
             _scrollStyle = new GUIStyle(HighLogic.Skin.scrollView);
             _hasInitStyles = true;
