@@ -4,6 +4,7 @@ using KSP.Localization;
 using KSP.UI.Screens;
 using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using UnityEngine;
 
@@ -15,6 +16,9 @@ namespace Konstruction
         protected float _cachedDryMass;
         protected float _cachedFundsCost;
         protected ProtoVessel _cachedProtoVessel;
+        protected List<string> _cachedPartList;
+        protected ShipConstruct _cachedShipConstruct;
+        protected Transform _cachedShipTransform;
         protected Dictionary<string, KonstructorResourceMetadata> _cachedResources;
         protected Texture2D _cachedThumbnail;
         protected ConfigNode _craftConfigNode;
@@ -121,6 +125,14 @@ namespace Konstruction
 
                 // Cache the ProtoVessel to use as the template for spawning the vessel later
                 _cachedProtoVessel = protoVessel;
+                _cachedPartList = new List<string>(_cachedProtoVessel.protoPartSnapshots.Select(o => o.partName));
+
+                var transform = this.transform;
+                var temp = transform.localPosition;
+                temp.z += 1.5f;
+                transform.localPosition = temp;
+                _cachedShipConstruct = construct;
+                _cachedShipTransform = transform;
             }
             catch (Exception ex)
             {
@@ -145,6 +157,114 @@ namespace Konstruction
             }
 
             return protoVessel;
+        }
+
+        protected ProtoVessel CreateProtoVessel2()
+        {
+            ShipConstruct construct = null;
+            ProtoVessel protoVessel = null;
+            Vessel vessel = null;
+            try
+            {
+                // Cache the ship config from the VAB/SPH, load the selected .craft file
+                //   and restore the cached config from the VAB/SPH
+                //var cachedConstruct = ShipConstruction.ShipConfig;
+                //construct = ShipConstruction.LoadShip(_selectedCraftFilePath);
+                //ShipConstruction.ShipConfig = cachedConstruct;
+                construct = new ShipConstruct();
+                //string craftText = File.ReadAllText(_selectedCraftFilePath);
+                construct = ShipConstruction.LoadShip(_selectedCraftFilePath);// ConfigNode.Parse(craftText);
+                //construct.LoadShip(craft);
+
+                ApplyNodeVariants(construct);
+
+                // Calculate vessel cost and mass and generate a thumbnail
+                construct.GetShipCosts(out _cachedFundsCost, out _);
+                construct.GetShipMass(out _cachedDryMass, out _);
+                _cachedThumbnail = _thumbnailService.GetShipThumbnail(construct);
+
+                var transform = this.transform;
+                var temp = transform.localPosition;
+                temp.z += 1.5f;
+                transform.localPosition = temp;
+                _cachedPartList = new List<string>(construct.parts.Select(o => o.partName));
+                _cachedShipConstruct = construct;
+                _cachedShipTransform = transform;
+                
+            }
+            catch (Exception ex)
+            {
+                Debug.LogException(ex);
+            }
+            finally
+            {
+                // ShipConstruction.LoadShip seems to load in all the part meshes for the vessel
+                //   (presumably for use in the VAB/SPH), so we need to destroy them
+                if (construct != null && construct.parts != null && construct.parts.Count > 0)
+                {
+                    foreach (var part in construct.parts)
+                    {
+                        Destroy(part.gameObject);
+                    }
+                }
+                // Destroy the temporary Vessel we created as well
+                if (vessel != null)
+                {
+                    Destroy(vessel.gameObject);
+                }
+            }
+
+            return protoVessel;
+        }
+
+        protected void ApplyNodeVariants(ShipConstruct ship)
+        {
+            for (int i = 0; i < ship.parts.Count; i++)
+            {
+                var p = ship.parts[i];
+                var pv = p.FindModulesImplementing<ModulePartVariants>();
+                for (int j = 0; j < pv.Count; j++)
+                {
+                    var variant = pv[j].SelectedVariant;
+                    for (int k = 0; k < variant.AttachNodes.Count; k++)
+                    {
+                        var vnode = variant.AttachNodes[k];
+                        UpdateAttachNode(p, vnode);
+                    }
+                }
+            }
+        }
+
+        void UpdateAttachNode(Part p, AttachNode vnode)
+        {
+            var pnode = p.FindAttachNode(vnode.id);
+            if (pnode != null)
+            {
+                pnode.originalPosition = vnode.originalPosition;
+                pnode.position = vnode.position;
+                pnode.size = vnode.size;
+            }
+        }
+
+        protected void SetCraftOrbit(Vessel craftVessel, OrbitDriver.UpdateMode mode)
+        {
+            craftVessel.orbitDriver.SetOrbitMode(mode);
+
+            var craftCoM = GetVesselWorldCoM(craftVessel);
+            var vesselCoM = GetVesselWorldCoM(this.vessel);
+            var offset = (Vector3d.zero + craftCoM - vesselCoM).xzy;
+
+            var corb = craftVessel.orbit;
+            var orb = this.vessel.orbit;
+            var UT = Planetarium.GetUniversalTime();
+            var body = orb.referenceBody;
+            corb.UpdateFromStateVectors(orb.pos + offset, orb.vel, body, UT);
+        }
+
+        public Vector3 GetVesselWorldCoM(Vessel v)
+        {
+            var com = v.localCoM;
+            return v.rootPart.partTransform.TransformPoint(com);
         }
 
         protected virtual void GetLocalizedPropertyValues()
