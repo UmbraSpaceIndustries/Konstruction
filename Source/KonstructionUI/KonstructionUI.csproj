@@ -57,6 +57,7 @@
     <Compile Include="DragWindow.cs" />
     <Compile Include="Interfaces\IKonstructor.cs" />
     <Compile Include="Interfaces\IPrefabInstantiator.cs" />
+    <Compile Include="Interfaces\IWindow.cs" />
     <Compile Include="KonstructorMetadata.cs" />
     <Compile Include="KonstructorWindow.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
