@@ -1,4 +1,5 @@
-﻿using System;
+﻿using KonstructionUI.Interfaces;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
@@ -7,7 +8,7 @@ using UnityEngine.UI;
 namespace KonstructionUI
 {
     [RequireComponent(typeof(RectTransform))]
-    public class KonstructorWindow : MonoBehaviour
+    public class KonstructorWindow : MonoBehaviour, IWindow
     {
         private bool _initialized;
         private IKonstructor _konstructor;
@@ -258,6 +259,14 @@ namespace KonstructionUI
             {
                 SelectedShipPanel.SetActive(false);
             }
+        }
+
+        public void Reset()
+        {
+            ClearResources();
+            HideAlert();
+            HideColumns();
+            HideSelectedShip();
         }
 
         public void SelectShip()
