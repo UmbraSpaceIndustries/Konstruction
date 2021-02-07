@@ -11,8 +11,9 @@ namespace Konstruction
         public override string GetInfo()
         {
             var output = new StringBuilder();
-            output.AppendLine("Aids in EVA Construction");
-            return output.ToString();
+            output.AppendLine("Aids in EVA Construction.\n\n");
+            output.AppendLine(KonstructionPoints.ToString());
+            output.AppendLine(" Konstruction Point(s)"); return output.ToString();
         }
     }
 }
