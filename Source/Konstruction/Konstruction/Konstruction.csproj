@@ -96,7 +96,7 @@
   <ItemGroup>
     <Compile Include="Konstructor\AbstractKonstructorModule.cs" />
     <Compile Include="Fabrication\FabricationMonitor.cs" />
-    <Compile Include="Fabrication\ModuleFabricatorPart.cs" />
+    <Compile Include="Fabrication\ModuleKonFabricator.cs" />
     <Compile Include="Konstructor\GroundKonstructorModule.cs" />
     <Compile Include="Konstructor\OrbitalKonstructorModule.cs" />
     <Compile Include="UI\WindowManager.cs" />
