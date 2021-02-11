@@ -52,12 +52,12 @@
     <Reference Include="UnityEngine.UIModule">
       <HintPath>..\..\..\..\KSP_DEV\KSP_x64_Data\Managed\UnityEngine.UIModule.dll</HintPath>
     </Reference>
+    <Reference Include="USIToolsUI">
+      <HintPath>..\..\..\..\KSP_DEV\GameData\000_USITools\USIToolsUI.dll</HintPath>
+    </Reference>
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="DragWindow.cs" />
     <Compile Include="Interfaces\IKonstructor.cs" />
-    <Compile Include="Interfaces\IPrefabInstantiator.cs" />
-    <Compile Include="Interfaces\IWindow.cs" />
     <Compile Include="KonstructorMetadata.cs" />
     <Compile Include="KonstructorWindow.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />

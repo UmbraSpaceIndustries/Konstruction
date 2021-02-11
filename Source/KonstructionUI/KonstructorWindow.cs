@@ -1,9 +1,9 @@
-﻿using KonstructionUI.Interfaces;
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
 using UnityEngine.UI;
+using USIToolsUI.Interfaces;
 
 namespace KonstructionUI
 {
@@ -13,7 +13,7 @@ namespace KonstructionUI
         private bool _initialized;
         private IKonstructor _konstructor;
         private IPrefabInstantiator _prefabInstantiator;
-        private Dictionary<string, RequiredResourcePanel> _resourcePanels
+        private readonly Dictionary<string, RequiredResourcePanel> _resourcePanels
             = new Dictionary<string, RequiredResourcePanel>();
         private ShipMetadata _shipMetadata;
 

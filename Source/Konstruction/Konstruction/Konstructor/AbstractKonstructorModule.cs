@@ -6,6 +6,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
+using USITools;
 
 namespace Konstruction
 {
@@ -26,7 +27,7 @@ namespace Konstruction
         protected string _noVesselSelectedErrorText;
         protected string _selectedCraftFilePath;
         private KonstructionScenario _scenario;
-        private ThumbnailService _thumbnailService;
+        private ShipThumbnailService _thumbnailService;
         protected string _unavailablePartsErrorText;
         protected KonstructorWindow _window;
 
@@ -81,7 +82,7 @@ namespace Konstruction
                 // Calculate vessel cost and mass and generate a thumbnail
                 construct.GetShipCosts(out _cachedFundsCost, out _);
                 construct.GetShipMass(out _cachedDryMass, out _);
-                _cachedThumbnail = _thumbnailService.GetShipThumbnail(construct);
+                _cachedThumbnail = _thumbnailService.GetThumbnail(construct);
 
                 // Create an emtpy Vessel and copy the parts from the loaded .craft file
                 vessel = new GameObject().AddComponent<Vessel>();
@@ -339,7 +340,7 @@ namespace Konstruction
             _scenario = FindObjectOfType<KonstructionScenario>();
             if (_scenario != null)
             {
-                _thumbnailService = _scenario.ServiceManager.GetService<ThumbnailService>();
+                _thumbnailService = _scenario.ServiceManager.GetService<ShipThumbnailService>();
                 var windowManager = _scenario.ServiceManager.GetService<WindowManager>();
                 _window = windowManager.GetWindow<KonstructorWindow>();
 

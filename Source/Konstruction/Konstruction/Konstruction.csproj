@@ -92,6 +92,9 @@
       <HintPath>..\..\..\..\..\KSP_DEV\GameData\000_USITools\USITools.dll</HintPath>
       <Private>False</Private>
     </Reference>
+    <Reference Include="USIToolsUI">
+      <HintPath>..\..\..\..\..\KSP_DEV\GameData\000_USITools\USIToolsUI.dll</HintPath>
+    </Reference>
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Konstructor\AbstractKonstructorModule.cs" />
@@ -99,7 +102,6 @@
     <Compile Include="Fabrication\ModuleFabricatorPart.cs" />
     <Compile Include="Konstructor\GroundKonstructorModule.cs" />
     <Compile Include="Konstructor\OrbitalKonstructorModule.cs" />
-    <Compile Include="UI\WindowManager.cs" />
     <Compile Include="Utilities\PartUtilities.cs" />
     <Compile Include="Misc\ModuleConstructedPart.cs" />
     <Compile Include="Misc\ModuleCounterweight.cs" />
@@ -119,7 +121,6 @@
     <Compile Include="Settings\KonstructionModuleResource.cs" />
     <Compile Include="Settings\KonstructionPersistance.cs" />
     <Compile Include="Settings\KonstructionScenario.cs" />
-    <Compile Include="Utilities\ThumbnailService.cs" />
     <Compile Include="Welding\ModuleWeldablePort.cs" />
     <Compile Include="Welding\NodeUtilities.cs" />
     <Compile Include="Robotics\ServoData.cs" />
