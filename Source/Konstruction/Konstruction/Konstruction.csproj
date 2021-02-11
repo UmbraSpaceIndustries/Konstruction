@@ -94,6 +94,7 @@
     </Reference>
     <Reference Include="USIToolsUI">
       <HintPath>..\..\..\..\..\KSP_DEV\GameData\000_USITools\USIToolsUI.dll</HintPath>
+      <Private>False</Private>
     </Reference>
   </ItemGroup>
   <ItemGroup>
@@ -135,6 +136,7 @@
     <ProjectReference Include="..\..\KonstructionUI\KonstructionUI.csproj">
       <Project>{d487f008-632d-41c3-8827-7711eae23d15}</Project>
       <Name>KonstructionUI</Name>
+      <Private>False</Private>
     </ProjectReference>
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />

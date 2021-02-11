@@ -3,19 +3,25 @@ using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
 using UnityEngine.UI;
+using USIToolsUI;
 using USIToolsUI.Interfaces;
 
 namespace KonstructionUI
 {
     [RequireComponent(typeof(RectTransform))]
-    public class KonstructorWindow : MonoBehaviour, IWindow
+    public class KonstructorWindow : AbstractWindow
     {
-        private bool _initialized;
         private IKonstructor _konstructor;
         private IPrefabInstantiator _prefabInstantiator;
         private readonly Dictionary<string, RequiredResourcePanel> _resourcePanels
             = new Dictionary<string, RequiredResourcePanel>();
         private ShipMetadata _shipMetadata;
+
+        #region Unity editor fields
+#pragma warning disable IDE0044 // Add readonly modifier
+#pragma warning disable IDE0051 // Remove unused private members
+#pragma warning disable 0169 // Field is never used
+#pragma warning disable 0649 // Field is never assigned to
 
         [SerializeField]
         private Text AlertText;
@@ -89,26 +95,13 @@ namespace KonstructionUI
         [SerializeField]
         private Text TitleBarText;
 
-        public Canvas Canvas
-        {
-            get
-            {
-                return _konstructor.Canvas ?? null;
-            }
-        }
+#pragma warning restore 0649
+#pragma warning restore 0169
+#pragma warning restore IDE0051
+#pragma warning restore IDE0044
+        #endregion
 
-        private RectTransform _rectTransform;
-        public RectTransform RectTransform
-        {
-            get
-            {
-                if (_rectTransform == null)
-                {
-                    _rectTransform = GetComponent<RectTransform>();
-                }
-                return _rectTransform;
-            }
-        }
+        public override Canvas Canvas => _konstructor?.Canvas;
 
         public void BuildShip()
         {
@@ -229,8 +222,6 @@ namespace KonstructionUI
             {
                 TitleBarText.text = konstructor.TitleBarText;
             }
-
-            _initialized = true;
         }
 
         public void HideAlert()
@@ -261,7 +252,7 @@ namespace KonstructionUI
             }
         }
 
-        public void Reset()
+        public override void Reset()
         {
             ClearResources();
             HideAlert();

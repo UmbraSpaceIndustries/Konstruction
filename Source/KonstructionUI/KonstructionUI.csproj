@@ -18,7 +18,7 @@
     <DebugSymbols>true</DebugSymbols>
     <DebugType>portable</DebugType>
     <Optimize>false</Optimize>
-    <OutputPath>..\..\..\..\..\KSP_DEV\GameData\UmbraSpaceIndustries\Konstruction\</OutputPath>
+    <OutputPath>..\..\..\..\KSP_DEV\GameData\UmbraSpaceIndustries\Konstruction\</OutputPath>
     <DefineConstants>DEBUG;TRACE</DefineConstants>
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
@@ -44,6 +44,7 @@
     </Reference>
     <Reference Include="UnityEngine.CoreModule">
       <HintPath>..\..\..\..\KSP_DEV\KSP_x64_Data\Managed\UnityEngine.CoreModule.dll</HintPath>
+      <Private>False</Private>
     </Reference>
     <Reference Include="UnityEngine.UI">
       <HintPath>..\..\..\..\KSP_DEV\KSP_x64_Data\Managed\UnityEngine.UI.dll</HintPath>
@@ -51,17 +52,21 @@
     </Reference>
     <Reference Include="UnityEngine.UIModule">
       <HintPath>..\..\..\..\KSP_DEV\KSP_x64_Data\Managed\UnityEngine.UIModule.dll</HintPath>
+      <Private>False</Private>
     </Reference>
     <Reference Include="USIToolsUI">
       <HintPath>..\..\..\..\KSP_DEV\GameData\000_USITools\USIToolsUI.dll</HintPath>
+      <Private>False</Private>
     </Reference>
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Interfaces\IKonstructor.cs" />
+    <Compile Include="Interfaces\IResourceTransferController.cs" />
     <Compile Include="KonstructorMetadata.cs" />
     <Compile Include="KonstructorWindow.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="RequiredResourcePanel.cs" />
+    <Compile Include="ResourceTransferWindow.cs" />
     <Compile Include="ShipMetadata.cs" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
