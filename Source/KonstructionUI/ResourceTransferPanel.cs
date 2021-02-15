@@ -178,6 +178,15 @@ namespace KonstructionUI
             {
                 SliderBLockIcon.gameObject.SetActive(targetBResource.IsLocked);
             }
+
+            // Automatically toggle buttons off if transfer is finished
+            if (_controller.Mode == TransferMode.None)
+            {
+                if (ToggleGroup.AnyTogglesOn())
+                {
+                    ToggleGroup.SetAllTogglesOff(true);
+                }
+            }
         }
     }
 }

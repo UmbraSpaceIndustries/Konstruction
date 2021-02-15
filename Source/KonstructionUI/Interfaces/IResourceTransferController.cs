@@ -1,7 +1,19 @@
 ﻿namespace KonstructionUI
 {
+    public enum TransferMode
+    {
+        None,
+        FastAtoB,
+        FastBtoA,
+        SlowAtoB,
+        SlowBtoA,
+        TransferAtoB,
+        TransferBtoA
+    }
+
     public interface IResourceTransferController
     {
+        TransferMode Mode { get; }
         string Resource { get; }
         void SetFastAtoB(bool enabled);
         void SetFastBtoA(bool enabled);

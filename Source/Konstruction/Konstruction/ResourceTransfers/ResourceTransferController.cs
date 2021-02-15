@@ -3,29 +3,18 @@ using System;
 
 namespace Konstruction
 {
-    enum TransferMode
-    {
-        None,
-        FastAtoB,
-        FastBtoA,
-        SlowAtoB,
-        SlowBtoA,
-        TransferAtoB,
-        TransferBtoA
-    }
-
     public class ResourceTransferController : IResourceTransferController
     {
         private const float FAST_XFER_SCALE = 0.1f;
         private const float MID_XFER_SCALE = 0.05f;
         private const float SLOW_XFER_SCALE = 0.01f;
         private bool _isTransferring;
-        private TransferMode _mode = TransferMode.None;
         private ResourceTransferPanel _panel;
         private double _transferAmount;
         private readonly ResourceTransferTarget _targetA;
         private readonly ResourceTransferTarget _targetB;
 
+        public TransferMode Mode { get; private set; } = TransferMode.None;
         public string Resource { get; private set; }
 
         public ResourceTransferController(
@@ -42,12 +31,12 @@ namespace Konstruction
         {
             if (enabled)
             {
-                _mode = TransferMode.FastAtoB;
+                Mode = TransferMode.FastAtoB;
                 _isTransferring = true;
             }
-            else if (_mode == TransferMode.FastAtoB)
+            else if (Mode == TransferMode.FastAtoB)
             {
-                _mode = TransferMode.None;
+                Mode = TransferMode.None;
             }
         }
 
@@ -55,17 +44,18 @@ namespace Konstruction
         {
             if (enabled)
             {
-                _mode = TransferMode.FastBtoA;
+                Mode = TransferMode.FastBtoA;
                 _isTransferring = true;
             }
-            else if (_mode == TransferMode.FastBtoA)
+            else if (Mode == TransferMode.FastBtoA)
             {
-                _mode = TransferMode.None;
+                Mode = TransferMode.None;
             }
         }
 
         public void SetPanel(ResourceTransferPanel panel)
         {
+            // This should only be called once per controller
             if (_panel == null)
             {
                 _panel = panel;
@@ -76,12 +66,12 @@ namespace Konstruction
         {
             if (enabled)
             {
-                _mode = TransferMode.SlowAtoB;
+                Mode = TransferMode.SlowAtoB;
                 _isTransferring = true;
             }
-            else if (_mode == TransferMode.SlowAtoB)
+            else if (Mode == TransferMode.SlowAtoB)
             {
-                _mode = TransferMode.None;
+                Mode = TransferMode.None;
             }
         }
 
@@ -89,12 +79,12 @@ namespace Konstruction
         {
             if (enabled)
             {
-                _mode = TransferMode.SlowBtoA;
+                Mode = TransferMode.SlowBtoA;
                 _isTransferring = true;
             }
-            else if (_mode == TransferMode.SlowBtoA)
+            else if (Mode == TransferMode.SlowBtoA)
             {
-                _mode = TransferMode.None;
+                Mode = TransferMode.None;
             }
         }
 
@@ -103,12 +93,12 @@ namespace Konstruction
             _transferAmount = amount;
             if (enabled)
             {
-                _mode = TransferMode.TransferAtoB;
+                Mode = TransferMode.TransferAtoB;
                 _isTransferring = true;
             }
-            else if (_mode == TransferMode.TransferAtoB)
+            else if (Mode == TransferMode.TransferAtoB)
             {
-                _mode = TransferMode.None;
+                Mode = TransferMode.None;
             }
         }
 
@@ -117,12 +107,12 @@ namespace Konstruction
             _transferAmount = amount;
             if (enabled)
             {
-                _mode = TransferMode.TransferBtoA;
+                Mode = TransferMode.TransferBtoA;
                 _isTransferring = true;
             }
-            else if (_mode == TransferMode.TransferBtoA)
+            else if (Mode == TransferMode.TransferBtoA)
             {
-                _mode = TransferMode.None;
+                Mode = TransferMode.None;
             }
         }
 
@@ -169,7 +159,7 @@ namespace Konstruction
             var amount = 0d;
             if (_isTransferring)
             {
-                switch (_mode)
+                switch (Mode)
                 {
                     case TransferMode.FastAtoB:
                         amount = _targetB.GetResource(Resource).MaxAmount *
@@ -177,7 +167,7 @@ namespace Konstruction
                             deltaTime;
                         if (!TransferAtoB(amount))
                         {
-                            _mode = TransferMode.None;
+                            Mode = TransferMode.None;
                         }
                         break;
                     case TransferMode.FastBtoA:
@@ -186,7 +176,7 @@ namespace Konstruction
                             deltaTime;
                         if (!TransferBtoA(amount))
                         {
-                            _mode = TransferMode.None;
+                            Mode = TransferMode.None;
                         }
                         break;
                     case TransferMode.SlowAtoB:
@@ -195,7 +185,7 @@ namespace Konstruction
                             deltaTime;
                         if (!TransferAtoB(amount))
                         {
-                            _mode = TransferMode.None;
+                            Mode = TransferMode.None;
                         }
                         break;
                     case TransferMode.SlowBtoA:
@@ -204,14 +194,14 @@ namespace Konstruction
                             deltaTime;
                         if (!TransferBtoA(amount))
                         {
-                            _mode = TransferMode.None;
+                            Mode = TransferMode.None;
                         }
                         break;
                     case TransferMode.TransferAtoB:
                         if (_transferAmount < ResourceUtilities.FLOAT_TOLERANCE)
                         {
                             _transferAmount = 0d;
-                            _mode = TransferMode.None;
+                            Mode = TransferMode.None;
                         }
                         else
                         {
@@ -220,7 +210,7 @@ namespace Konstruction
                                 _targetB.GetResource(Resource).MaxAmount * MID_XFER_SCALE * deltaTime);
                             if (!TransferAtoB(amount))
                             {
-                                _mode = TransferMode.None;
+                                Mode = TransferMode.None;
                             }
                         }
                         break;
@@ -228,7 +218,7 @@ namespace Konstruction
                         if (_transferAmount < ResourceUtilities.FLOAT_TOLERANCE)
                         {
                             _transferAmount = 0d;
-                            _mode = TransferMode.None;
+                            Mode = TransferMode.None;
                         }
                         else
                         {
@@ -237,7 +227,7 @@ namespace Konstruction
                                 _targetA.GetResource(Resource).MaxAmount * MID_XFER_SCALE * deltaTime);
                             if (!TransferBtoA(amount))
                             {
-                                _mode = TransferMode.None;
+                                Mode = TransferMode.None;
                             }
                         }
                         break;
