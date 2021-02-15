@@ -103,6 +103,9 @@
     <Compile Include="Fabrication\ModuleFabricatorPart.cs" />
     <Compile Include="Konstructor\GroundKonstructorModule.cs" />
     <Compile Include="Konstructor\OrbitalKonstructorModule.cs" />
+    <Compile Include="ResourceTransfers\ResourceTransferController.cs" />
+    <Compile Include="ResourceTransfers\ResourceTransferScenario.cs" />
+    <Compile Include="ResourceTransfers\ResourceTransferTarget.cs" />
     <Compile Include="Utilities\PartUtilities.cs" />
     <Compile Include="Misc\ModuleConstructedPart.cs" />
     <Compile Include="Misc\ModuleCounterweight.cs" />

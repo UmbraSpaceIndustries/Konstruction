@@ -1,16 +1,15 @@
-﻿using UnityEngine;
-
-namespace KonstructionUI
+﻿namespace KonstructionUI
 {
     public interface IResourceTransferController
     {
-        Canvas Canvas { get; }
-        string Column1HeaderText { get; }
-        string Column2HeaderText { get; }
-        string Column3HeaderText { get; }
-        string Column1Instructions { get; }
-        string Column2Instructions { get; }
-        string Column3Instructions { get; }
-        string TitleBarText { get; }
+        string Resource { get; }
+        void SetFastAtoB(bool enabled);
+        void SetFastBtoA(bool enabled);
+        void SetPanel(ResourceTransferPanel panel);
+        void SetSlowAtoB(bool enabled);
+        void SetSlowBtoA(bool enabled);
+        void SetTransferAtoB(bool enabled, double amount = 0d);
+        void SetTransferBtoA(bool enabled, double amount = 0d);
+        void Update(float deltaTime);
     }
 }

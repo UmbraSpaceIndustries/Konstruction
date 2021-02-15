@@ -60,12 +60,17 @@
     </Reference>
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="Extensions\DropdownOptionWithId.cs" />
     <Compile Include="Interfaces\IKonstructor.cs" />
     <Compile Include="Interfaces\IResourceTransferController.cs" />
+    <Compile Include="Interfaces\ITransferTargetsController.cs" />
     <Compile Include="KonstructorMetadata.cs" />
     <Compile Include="KonstructorWindow.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="RequiredResourcePanel.cs" />
+    <Compile Include="ResourceMetadata.cs" />
+    <Compile Include="ResourceTransferPanel.cs" />
+    <Compile Include="ResourceTransferTargetMetadata.cs" />
     <Compile Include="ResourceTransferWindow.cs" />
     <Compile Include="ShipMetadata.cs" />
   </ItemGroup>
