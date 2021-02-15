@@ -113,6 +113,7 @@ namespace Konstruction
                 {
                     DisplayName = GetVesselDisplayName(v),
                     Id = v.id.ToString("N"),
+                    IsCurrentVessel = v == FlightGlobals.ActiveVessel,
                     Resources = ResourceTransferTarget.GetResourceMetadata(v.Parts),
                 })
                 .ToList();
@@ -236,27 +237,6 @@ namespace Konstruction
             }
         }
 
-        public void StartTransfer(
-            ResourceMetadata resource,
-            bool fromAtoB,
-            double amount)
-        {
-            throw new NotImplementedException();
-        }
-
-        public void StartTransfer(
-            ResourceMetadata resource,
-            bool fromAtoB,
-            bool isFast)
-        {
-            throw new NotImplementedException();
-        }
-
-        public void StopTransfer(ResourceMetadata resource)
-        {
-            throw new NotImplementedException();
-        }
-
         /// <summary>
         /// Implementation of <see cref="MonoBehaviour"/>.Update().
         /// </summary>
@@ -271,8 +251,8 @@ namespace Konstruction
                 var now = Planetarium.GetUniversalTime();
                 if (_nextLazyUpdate <= now)
                 {
-                    LazyUpdate(1f);
-                    _nextLazyUpdate = now + 1d;
+                    LazyUpdate(0.5f);
+                    _nextLazyUpdate = now + 0.5d;
                 }
             }
         }

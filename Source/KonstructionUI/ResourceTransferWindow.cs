@@ -82,6 +82,7 @@ namespace KonstructionUI
             if (gameObject.activeSelf)
             {
                 gameObject.SetActive(false);
+                _onCloseCallback.Invoke();
             }
         }
 
@@ -159,7 +160,15 @@ namespace KonstructionUI
                 {
                     HideAlert();
                     ShowRow(Row1);
-                    var sorted = targets.OrderBy(t => t.DisplayName);
+                    var currentVessel = targets
+                        .FirstOrDefault(t => t.IsCurrentVessel);
+                    var sorted = currentVessel == null ?
+                        targets.OrderBy(t => t.DisplayName) :
+                        targets.Where(t => !t.IsCurrentVessel).OrderBy(t => t.DisplayName);
+                    if (currentVessel != null)
+                    {
+                        _transferTargets.Add(currentVessel.Id, currentVessel);
+                    }
                     foreach (var target in sorted)
                     {
                         _transferTargets.Add(target.Id, target);
@@ -367,7 +376,7 @@ namespace KonstructionUI
             {
                 HideRow(Row2);
             }
-            else if (_transferTargetA == _transferTargetB)
+            else if (_transferTargetA.Id == _transferTargetB.Id)
             {
                 HideRow(Row2);
                 ShowAlert(_transferTargetsController.SameVesselSelectedMessage);

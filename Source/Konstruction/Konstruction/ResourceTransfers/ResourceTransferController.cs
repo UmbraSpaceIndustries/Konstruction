@@ -1,4 +1,5 @@
 ﻿using KonstructionUI;
+using System;
 
 namespace Konstruction
 {
@@ -127,11 +128,18 @@ namespace Konstruction
 
         private bool TransferAtoB(double amount)
         {
-            if (_targetA.CanSubtractResource(Resource) &&
-                _targetB.CanAddResource(Resource))
+            var available = _targetA.GetAvailableAmount(Resource);
+            var storage = _targetB.GetStorageAvailable(Resource);
+            var availability = Math.Min(available, storage);
+            if (availability > ResourceUtilities.FLOAT_TOLERANCE)
             {
+                if (availability < amount)
+                {
+                    amount = availability;
+                }
                 _targetA.SubtractResource(Resource, amount);
                 _targetB.AddResource(Resource, amount);
+                _transferAmount = Math.Max(_transferAmount - amount, 0d);
                 return true;
             }
             return false;
@@ -139,11 +147,18 @@ namespace Konstruction
 
         private bool TransferBtoA(double amount)
         {
-            if (_targetA.CanAddResource(Resource) &&
-                _targetB.CanSubtractResource(Resource))
+            var available = _targetB.GetAvailableAmount(Resource);
+            var storage = _targetA.GetStorageAvailable(Resource);
+            var availability = Math.Min(available, storage);
+            if (availability > ResourceUtilities.FLOAT_TOLERANCE)
             {
+                if (availability < amount)
+                {
+                    amount = availability;
+                }
                 _targetA.AddResource(Resource, amount);
                 _targetB.SubtractResource(Resource, amount);
+                _transferAmount = Math.Max(_transferAmount - amount, 0d);
                 return true;
             }
             return false;
@@ -200,14 +215,10 @@ namespace Konstruction
                         }
                         else
                         {
-                            amount = _targetB.GetResource(Resource).MaxAmount *
-                                MID_XFER_SCALE *
-                                deltaTime;
-                            if (TransferAtoB(amount))
-                            {
-                                _transferAmount -= amount;
-                            }
-                            else
+                            amount = Math.Min(
+                                _transferAmount,
+                                _targetB.GetResource(Resource).MaxAmount * MID_XFER_SCALE * deltaTime);
+                            if (!TransferAtoB(amount))
                             {
                                 _mode = TransferMode.None;
                             }
@@ -221,14 +232,10 @@ namespace Konstruction
                         }
                         else
                         {
-                            amount = _targetA.GetResource(Resource).MaxAmount *
-                                MID_XFER_SCALE *
-                                deltaTime;
-                            if (TransferBtoA(amount))
-                            {
-                                _transferAmount -= amount;
-                            }
-                            else
+                            amount = Math.Min(
+                                _transferAmount,
+                                _targetA.GetResource(Resource).MaxAmount * MID_XFER_SCALE * deltaTime);
+                            if (!TransferBtoA(amount))
                             {
                                 _mode = TransferMode.None;
                             }

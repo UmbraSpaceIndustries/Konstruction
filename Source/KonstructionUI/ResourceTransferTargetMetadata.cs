@@ -6,6 +6,7 @@ namespace KonstructionUI
     {
         public string DisplayName { get; set; }
         public string Id { get; set; }
+        public bool IsCurrentVessel { get; set; }
         public Dictionary<string, ResourceMetadata> Resources { get; set; }
     }
 }

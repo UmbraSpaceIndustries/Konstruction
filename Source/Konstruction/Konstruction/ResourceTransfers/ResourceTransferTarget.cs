@@ -34,25 +34,13 @@ namespace Konstruction
                 ResourceFlowMode.ALL_VESSEL);
         }
 
-        public bool CanAddResource(string resourceName)
+        public double GetAvailableAmount(string resourceName)
         {
-            var storage = _broker.StorageAvailable(
-                _vessel.rootPart,
-                resourceName,
-                TimeWarp.fixedDeltaTime,
-                ResourceFlowMode.ALL_VESSEL,
-                1d);
-            return storage > ResourceUtilities.FLOAT_TOLERANCE;
-        }
-
-        public bool CanSubtractResource(string resourceName)
-        {
-            var available = _broker.AmountAvailable(
+            return _broker.AmountAvailable(
                 _vessel.rootPart,
                 resourceName,
                 TimeWarp.fixedDeltaTime,
                 ResourceFlowMode.ALL_VESSEL);
-            return available > ResourceUtilities.FLOAT_TOLERANCE;
         }
 
         public ResourceMetadata GetResource(string resourceName)
@@ -124,6 +112,16 @@ namespace Konstruction
             return resources;
         }
 
+        public double GetStorageAvailable(string resourceName)
+        {
+            return _broker.StorageAvailable(
+                _vessel.rootPart,
+                resourceName,
+                TimeWarp.fixedDeltaTime,
+                ResourceFlowMode.ALL_VESSEL,
+                1d);
+        }
+
         public static bool IsTransferable(PartResource resource)
         {
             return PartResourceLibrary
@@ -132,7 +130,7 @@ namespace Konstruction
                 .resourceFlowMode != ResourceFlowMode.NO_FLOW;
         }
 
-        public void SubtractResource(string resourceName, double amount)
+        public double SubtractResource(string resourceName, double amount)
         {
             var available = _broker.AmountAvailable(
                 _vessel.rootPart,
@@ -146,6 +144,7 @@ namespace Konstruction
                 amountToRequest,
                 TimeWarp.fixedDeltaTime,
                 ResourceFlowMode.ALL_VESSEL);
+            return amountToRequest;
         }
     }
 }
