@@ -86,6 +86,28 @@ namespace KonstructionUI
             }
         }
 
+        public void HideAlert()
+        {
+            if (AlertText != null && AlertText.gameObject.activeSelf)
+            {
+                AlertText.gameObject.SetActive(false);
+            }
+        }
+
+        private void HideRow(GameObject row)
+        {
+            if (row != null && row.activeSelf)
+            {
+                row.SetActive(false);
+            }
+        }
+
+        private void HideRows()
+        {
+            HideRow(Row1);
+            HideRow(Row2);
+        }
+
         public void Initialize(
             ITransferTargetsController controller,
             IPrefabInstantiator prefabInstantiator,
@@ -118,28 +140,6 @@ namespace KonstructionUI
             {
                 TargetBDropdown.ClearOptions();
             }
-        }
-
-        public void HideAlert()
-        {
-            if (AlertText != null && AlertText.gameObject.activeSelf)
-            {
-                AlertText.gameObject.SetActive(false);
-            }
-        }
-
-        private void HideRow(GameObject row)
-        {
-            if (row != null && row.activeSelf)
-            {
-                row.SetActive(false);
-            }
-        }
-
-        private void HideRows()
-        {
-            HideRow(Row1);
-            HideRow(Row2);
         }
 
         public void OnResourceTransferTargetsUpdated(

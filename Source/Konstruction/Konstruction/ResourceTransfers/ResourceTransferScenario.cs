@@ -10,9 +10,7 @@ using USITools;
 
 namespace Konstruction
 {
-    [KSPScenario(
-        ScenarioCreationOptions.AddToAllGames,
-        GameScenes.FLIGHT)]
+    [KSPScenario(ScenarioCreationOptions.AddToAllGames, GameScenes.FLIGHT)]
     public class ResourceTransferScenario : ScenarioModule, ITransferTargetsController
     {
         private const float LOCAL_LOGISTICS_RANGE = 150f;

@@ -70,6 +70,7 @@ namespace Konstruction
         {
             ShipConstruct construct = null;
             ProtoVessel protoVessel = null;
+            ProtoPartSnapshot partSnapshot = null;
             Vessel vessel = null;
             try
             {
@@ -113,7 +114,15 @@ namespace Konstruction
                     part.UpdateOrgPosAndRot(rootPart);
 
                     part.vessel = vessel;
-                    protoVessel.protoPartSnapshots.Add(new ProtoPartSnapshot(part, protoVessel));
+                    partSnapshot = new ProtoPartSnapshot(part, protoVessel);
+                    foreach (var resource in partSnapshot.resources)
+                    {
+                        if (resource.resourceName != "ElectricCharge")
+                        {
+                            resource.amount = 0d;
+                        }
+                    }
+                    protoVessel.protoPartSnapshots.Add(partSnapshot);
                 }
                 foreach (var snapshot in protoVessel.protoPartSnapshots)
                 {
