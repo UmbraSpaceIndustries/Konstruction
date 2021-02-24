@@ -92,6 +92,10 @@
       <HintPath>..\..\..\..\..\KSP_DEV\GameData\000_USITools\USITools.dll</HintPath>
       <Private>False</Private>
     </Reference>
+    <Reference Include="USIToolsUI">
+      <HintPath>..\..\..\..\..\KSP_DEV\GameData\000_USITools\USIToolsUI.dll</HintPath>
+      <Private>False</Private>
+    </Reference>
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Konstructor\AbstractKonstructorModule.cs" />
@@ -99,7 +103,9 @@
     <Compile Include="Fabrication\ModuleKonFabricator.cs" />
     <Compile Include="Konstructor\GroundKonstructorModule.cs" />
     <Compile Include="Konstructor\OrbitalKonstructorModule.cs" />
-    <Compile Include="UI\WindowManager.cs" />
+    <Compile Include="ResourceTransfers\ResourceTransferController.cs" />
+    <Compile Include="ResourceTransfers\ResourceTransferScenario.cs" />
+    <Compile Include="ResourceTransfers\ResourceTransferTarget.cs" />
     <Compile Include="Utilities\PartUtilities.cs" />
     <Compile Include="Misc\ModuleConstructedPart.cs" />
     <Compile Include="Misc\ModuleCounterweight.cs" />
@@ -119,7 +125,6 @@
     <Compile Include="Settings\KonstructionModuleResource.cs" />
     <Compile Include="Settings\KonstructionPersistance.cs" />
     <Compile Include="Settings\KonstructionScenario.cs" />
-    <Compile Include="Utilities\ThumbnailService.cs" />
     <Compile Include="Welding\ModuleWeldablePort.cs" />
     <Compile Include="Welding\NodeUtilities.cs" />
     <Compile Include="Robotics\ServoData.cs" />
@@ -134,6 +139,7 @@
     <ProjectReference Include="..\..\KonstructionUI\KonstructionUI.csproj">
       <Project>{d487f008-632d-41c3-8827-7711eae23d15}</Project>
       <Name>KonstructionUI</Name>
+      <Private>False</Private>
     </ProjectReference>
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />

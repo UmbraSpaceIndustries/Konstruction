@@ -1,6 +1,6 @@
-﻿using Konstruction.Utilities;
-using KonstructionUI;
+﻿using KonstructionUI;
 using System;
+using System.IO;
 using UnityEngine;
 using USITools;
 
@@ -13,6 +13,8 @@ namespace Konstruction
     {
         public GameObject KonstructorResourcePanelPrefab { get; private set; }
         public GameObject KonstructorWindowPrefab { get; private set; }
+        public GameObject ResourceTransferPanelPrefab { get; private set; }
+        public GameObject ResourceTransferWindowPrefab { get; private set; }
         public ServiceManager ServiceManager { get; private set; }
 
         public override void OnAwake()
@@ -29,20 +31,23 @@ namespace Konstruction
                     // Setup dependency injection for Konstruction services
                     var serviceCollection = usiTools.ServiceCollection;
                     serviceCollection.AddSingletonService<KonstructionPersistance>();
-                    serviceCollection.AddSingletonService<ThumbnailService>();
-                    serviceCollection.AddSingletonService<WindowManager>();
 
                     // Setup UI prefabs
-                    var filePath = KSPUtil.ApplicationRootPath + "GameData/UmbraSpaceIndustries/Konstruction/Assets/Konstruction.prefabs";
-
+                    var filePath = Path.Combine(KSPUtil.ApplicationRootPath,
+                        "GameData/UmbraSpaceIndustries/Konstruction/Assets/UI/Konstruction.prefabs");
                     var prefabs = AssetBundle.LoadFromFile(filePath);
                     KonstructorWindowPrefab = prefabs.LoadAsset<GameObject>("KonstructorWindow");
                     KonstructorResourcePanelPrefab = prefabs.LoadAsset<GameObject>("RequiredResourcePanel");
+                    ResourceTransferWindowPrefab = prefabs.LoadAsset<GameObject>("ResourceTransferWindow");
+                    ResourceTransferPanelPrefab = prefabs.LoadAsset<GameObject>("ResourceTransferPanel");
 
                     // Register UI prefabs in window manager
                     var windowManager = ServiceManager.GetService<WindowManager>();
-                    windowManager.RegisterWindow<KonstructorWindow>(KonstructorWindowPrefab);
-                    windowManager.RegisterPrefab<RequiredResourcePanel>(KonstructorResourcePanelPrefab);
+                    windowManager
+                        .RegisterWindow<KonstructorWindow>(KonstructorWindowPrefab)
+                        .RegisterPrefab<RequiredResourcePanel>(KonstructorResourcePanelPrefab)
+                        .RegisterPrefab<ResourceTransferPanel>(ResourceTransferPanelPrefab)
+                        .RegisterWindow<ResourceTransferWindow>(ResourceTransferWindowPrefab);
                 }
                 catch (ServiceAlreadyRegisteredException) { }
                 catch (Exception ex)
