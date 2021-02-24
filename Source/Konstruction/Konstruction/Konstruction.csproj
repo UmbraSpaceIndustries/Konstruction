@@ -98,8 +98,13 @@
     </Reference>
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="Fabrication\DekonstructorGUI.cs" />
+    <Compile Include="Fabrication\InventoryConstraints.cs" />
+    <Compile Include="Fabrication\KonFabCommonGUI.cs" />
+    <Compile Include="Fabrication\ModuleDekonstructor.cs" />
+    <Compile Include="Fabrication\PartScrollbarData.cs" />
     <Compile Include="Konstructor\AbstractKonstructorModule.cs" />
-    <Compile Include="Fabrication\FabricationMonitor.cs" />
+    <Compile Include="Fabrication\FabricationGUI.cs" />
     <Compile Include="Fabrication\ModuleKonFabricator.cs" />
     <Compile Include="Konstructor\GroundKonstructorModule.cs" />
     <Compile Include="Konstructor\OrbitalKonstructorModule.cs" />

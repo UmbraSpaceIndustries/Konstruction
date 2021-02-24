@@ -6,43 +6,29 @@ using UnityEngine;
 using KSP.UI.Screens;
 using System.Collections.Generic;
 using USITools;
-using USITools.UITools;
+using Konstruction.Utilities;
 
 namespace Konstruction.Fabrication
 {
 
-    public class FabricationGUI : Window
+    public class FabricationGUI : KonFabCommonGUI
     {
-        private KonstructionScenario _scenario;
-        //private Rect _windowPosition = new Rect(300, 60, 950, 600);
-        private GUIStyle _windowStyle;
-        private GUIStyle _labelStyle;
-        private GUIStyle _detailStyle;
-        private GUIStyle _buttonStyle;
-        private GUIStyle _scrollStyle;
-        private GUIStyle _centeredLabelStyle;
         private Vector2 scrollPosCat = Vector2.zero;
         private Vector2 scrollPosPart = Vector2.zero;
         public static bool renderDisplay = false;
-        private static List<AvailablePart> _aParts;
-        private static List<Part> _vParts;
         private static List<string> _cckTags;
         private static List<PartScrollbarData> catParts;
-        private static Guid _curVesselId;
         private string currentCat = "";
         private PartScrollbarData currentItem;
         private Texture nfTexture;
         private Texture thumbTexture;
         private AvailablePart currentPart;
-        private KonstructionPersistance _persistence;
-        private bool _isLoaded;
         public static Dictionary<string, string> PartTextureCache;
-        public const int CONST_MATKIT_RATIO = 2;
         private readonly ModuleKonFabricator _module;
 
         #region Constructors
         public FabricationGUI(ModuleKonFabricator partModule, KonstructionScenario scenario)
-            : base("Konfabricator Control Panel",950,570)
+            : base("Konfabricator Control Panel",950,560)
          {
             _module = partModule;
             _scenario = scenario;
@@ -207,20 +193,23 @@ namespace Konstruction.Fabrication
 
                     GUILayout.Box(thumbTexture, GUILayout.Height(100));
 
-                    if (valRes && valMVIn && valMVOut)
+                    if (valRes && valMVIn && valMVOut && valE)
                     {
                         if (GUILayout.Button("Start KonFabricator!", GUILayout.Width(300), GUILayout.Height(50)))
                             BuildAThing(currentItem.partName);
                     }
+                    if (!valE)
+                        GUILayout.Label(string.Format("<color=#ff6e69>Engineer not present in active vessel.</color>"), _labelStyle, GUILayout.Width(320));
                     if (!valMVIn)
-                        GUILayout.Label(string.Format("<color=#ff6e69>Engineer not present in active vessel.</color>"), _labelStyle, GUILayout.Width(350));
-                    if (!valMVIn)
-                        GUILayout.Label(string.Format("<color=#ff6e69>Insufficient KonFabricator capacity to build this part.</color>"), _labelStyle, GUILayout.Width(350));
+                        GUILayout.Label(string.Format("<color=#ff6e69>Insufficient KonFabricator capacity to build this part.</color>"), _labelStyle, GUILayout.Width(320));
                     if (!valMVOut)
-                        GUILayout.Label(string.Format("<color=#ff6e69>Cannot find an inventory slot that will fit this part.</color>"), _labelStyle, GUILayout.Width(350));
+                        GUILayout.Label(string.Format("<color=#ff6e69>Cannot find an inventory slot that will fit this part.</color>"), _labelStyle, GUILayout.Width(320));
                     if (!valRes)
-                        GUILayout.Label(string.Format("<color=#ff6e69>Insufficient resources.</color>"), _labelStyle, GUILayout.Width(350));
+                        GUILayout.Label(string.Format("<color=#ff6e69>Insufficient resources.</color>"), _labelStyle, GUILayout.Width(320));
 
+                    GUILayout.Label(string.Format(" "), _labelStyle, GUILayout.Width(50)); //Spacer
+                    if (GUILayout.Button("Close Window"))
+                        SetVisible(false);
                     GUILayout.EndVertical();
                 }
                 //*********************
@@ -275,40 +264,6 @@ namespace Konstruction.Fabrication
             }
         }
 
-        public IEnumerable<Part> VesselInventoryParts
-        {
-            get
-            {
-                if(_vParts == null || _curVesselId != FlightGlobals.ActiveVessel.id)
-                {
-                    _curVesselId = FlightGlobals.ActiveVessel.id;
-                    _vParts = FlightGlobals.ActiveVessel.parts.Where(x=>x.HasModuleImplementing<ModuleInventoryPart>()).ToList();
-                }
-                return _vParts;
-            }
-        }
-
-        public IEnumerable<AvailablePart> AllCargoParts
-        {
-            get
-            {
-                if (_aParts == null)
-                {
-                    _aParts = PartLoader.LoadedPartsList
-                        .Where(x => x.partPrefab.HasModuleImplementing<ModuleCargoPart>()
-                       && x.TechHidden == false).ToList();
-                    for(int i = _aParts.Count; i-- > 0;)
-                    {
-                        var p = _aParts[i];
-                        var m = p.partPrefab.FindModuleImplementing<ModuleCargoPart>();
-                        if (m.packedVolume < 0)
-                            _aParts.RemoveAt(i);
-                    }
-                }
-                return _aParts;
-            }
-        }
-
         public List<string> GetCCKCategories()
         {
             if (_cckTags == null)
@@ -336,20 +291,6 @@ namespace Konstruction.Fabrication
             return texture;
         }
 
-        string ColorToHex(Color32 color)
-        {
-            string hex = color.r.ToString("X2") + color.g.ToString("X2") + color.b.ToString("X2");
-            return hex;
-        }
-
-        private AvailablePart GetPartByName(string partName)
-        {
-            var p = AllCargoParts.Where(x => x.name == partName).FirstOrDefault();
-            if (p != null)
-                return p;
-            return null;
-        }
-
         private bool IsPrinterAvailable(AvailablePart part, float mass, float volume)
         {
             var modCP = part.partPrefab.FindModuleImplementing<ModuleCargoPart>();
@@ -365,25 +306,18 @@ namespace Konstruction.Fabrication
         private bool IsSlotAvailable(AvailablePart part)
         {
             var modCP = part.partPrefab.FindModuleImplementing<ModuleCargoPart>();
+            var inv = _module.part.FindModuleImplementing<ModuleInventoryPart>();
 
-            foreach (var p in VesselInventoryParts)
+            if (inv.TotalEmptySlots() > 0)
             {
-                var inv = p.FindModuleImplementing<ModuleInventoryPart>();
-
-                if (inv.TotalEmptySlots() > 0)
+                var con = GetCapacity(inv);
+                if (con.VolumeAvailable >= modCP.packedVolume && con.MassAvailable >= part.partPrefab.mass)
                 {
-                    var con = GetCapacity(inv);
-                    if (con.MassAvailable < part.partPrefab.mass)
-                        continue;
-
-                    if (con.VolumeAvailable >= modCP.packedVolume)
+                    for (int z = 0; z < inv.InventorySlots; z++)
                     {
-                        for (int z = 0; z < inv.InventorySlots; z++)
+                        if (inv.IsSlotEmpty(z))
                         {
-                            if (inv.IsSlotEmpty(z))
-                            {
-                                return true;
-                            }
+                            return true;
                         }
                     }
                 }
@@ -399,34 +333,29 @@ namespace Konstruction.Fabrication
 
             var modCP = iPart.partPrefab.FindModuleImplementing<ModuleCargoPart>();
 
-            foreach (var p in VesselInventoryParts)
+            var inv = _module.part.FindModuleImplementing<ModuleInventoryPart>();
+
+            if (inv.TotalEmptySlots() > 0)
             {
-                var inv = p.FindModuleImplementing<ModuleInventoryPart>();
-
-                if (inv.TotalEmptySlots() > 0)
+                var con = GetCapacity(inv);
+                if (con.VolumeAvailable >= modCP.packedVolume && con.MassAvailable >= iPart.partPrefab.mass)
                 {
-                    var con = GetCapacity(inv);
-                    if (con.MassAvailable < iPart.partPrefab.mass)
-                        continue;
-
-                    if (con.VolumeAvailable >= modCP.packedVolume)
+                    for (int z = 0; z < inv.InventorySlots; z++)
                     {
-                        for (int z = 0; z < inv.InventorySlots; z++)
+                        if (inv.IsSlotEmpty(z))
                         {
-                            if (inv.IsSlotEmpty(z))
+                            Utilities.PartUtilities.ConsumeResources(Utilities.PartUtilities.GetPartCost(iPart, _persistence));
+                            foreach (var r in iPart.partPrefab.Resources)
                             {
-                                Utilities.PartUtilities.ConsumeResources(Utilities.PartUtilities.GetPartCost(iPart, _persistence));
-                                foreach (var r in iPart.partPrefab.Resources)
-                                {
-                                    r.amount = 0;
-                                }
-                                inv.StoreCargoPartAtSlot(iPart.partPrefab, z);
-                                return true;
+                                r.amount = 0;
                             }
+                            inv.StoreCargoPartAtSlot(iPart.partPrefab, z);
+                            return true;
                         }
                     }
                 }
             }
+           
             return false;
         }
 
@@ -467,12 +396,6 @@ namespace Konstruction.Fabrication
             return cats;
         }
 
-        private AvailablePart LoadPart(string partName)
-        {
-            var p = AllCargoParts.Where(x => x.name == partName).Single();
-            return p;
-        }
-
         private void GetPartsForCategory(string catName)
         {
             var cParts = AllCargoParts
@@ -499,23 +422,5 @@ namespace Konstruction.Fabrication
             thumbTexture = LoadTexture(Path.Combine(path, "notfound.png"));
         }
 
-        protected override void ConfigureStyles()
-        {
-            base.ConfigureStyles();
-            _windowStyle = new GUIStyle(HighLogic.Skin.window)
-            {
-                fixedWidth = 950f,
-                fixedHeight = 600f
-            };
-            _labelStyle = new GUIStyle(HighLogic.Skin.label);
-            _detailStyle = new GUIStyle(HighLogic.Skin.label);
-            _detailStyle.fixedHeight = 20f;
-            _centeredLabelStyle = new GUIStyle(HighLogic.Skin.label)
-            {
-                alignment = TextAnchor.MiddleCenter
-            };
-            _buttonStyle = new GUIStyle(HighLogic.Skin.button);
-            _scrollStyle = new GUIStyle(HighLogic.Skin.scrollView);
-        }
     }
 }

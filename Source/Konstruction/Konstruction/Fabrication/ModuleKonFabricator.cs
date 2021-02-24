@@ -3,7 +3,6 @@ using UnityEngine;
 
 namespace Konstruction.Fabrication
 {
-
     public class ModuleKonFabricator : PartModule
     {
         protected FabricationGUI _mainGui;

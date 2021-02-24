@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Linq;
 using USITools;
 
 namespace Konstruction.Utilities
@@ -139,6 +140,45 @@ namespace Konstruction.Utilities
             return foundAmount;
         }
 
+        public static void AddResource(PartResourceDefinition resource, double amtToGive)
+        {
+            double remaining = amtToGive;
+            var resName = resource.name;
+            var whpList = LogisticsTools.GetRegionalWarehouses(FlightGlobals.ActiveVessel, "USI_ModuleResourceWarehouse");
+            var count = whpList.Count;
+
+            for (int i = 0; i < count; ++i)
+            {
+                if (remaining <= ResourceUtilities.FLOAT_TOLERANCE)
+                    break;
+
+                var whp = whpList[i];
+                if (whp.Modules.Contains("USI_ModuleResourceWarehouse"))
+                {
+                    var wh = whp.FindModuleImplementing<USI_ModuleResourceWarehouse>();
+                    if (!wh.localTransferEnabled)
+                        continue;
+                }
+                if (whp.Resources.Contains(resName))
+                {
+                    var res = whp.Resources[resName];
+                    var space = res.maxAmount - res.amount;
+                    if ( space >= remaining)
+                    {
+                        res.amount += remaining;
+                        remaining = 0;
+                        break;
+                    }
+                    else
+                    {
+                        remaining -= res.amount;
+                        res.amount = res.maxAmount;
+                    }
+                }
+            }
+
+        }
+
         public static void ConsumeResource(PartResourceDefinition resource, double amtToTake)
         {
             double needed = amtToTake;
@@ -171,6 +211,30 @@ namespace Konstruction.Utilities
                     }
                 }
             }
+        }
+
+        public static double GetStorageSpace(string resName)
+        {
+            double foundStorage = 0;
+            var whpList = LogisticsTools.GetRegionalWarehouses(FlightGlobals.ActiveVessel, "USI_ModuleResourceWarehouse");
+            var count = whpList.Count;
+
+            for (int i = 0; i < count; ++i)
+            {
+                var whp = whpList[i];
+                if (whp.Modules.Contains("USI_ModuleResourceWarehouse"))
+                {
+                    var wh = whp.FindModuleImplementing<USI_ModuleResourceWarehouse>();
+                    if (!wh.localTransferEnabled)
+                        continue;
+                }
+                if (whp.Resources.Contains(resName))
+                {
+                    var res = whp.Resources[resName];
+                    foundStorage += res.maxAmount - res.amount;
+                }
+            }
+            return foundStorage;
         }
     }
 

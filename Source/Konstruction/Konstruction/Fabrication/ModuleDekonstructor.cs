@@ -8,6 +8,9 @@ namespace Konstruction.Fabrication
         protected DekonstructorGUI _mainGui;
         protected KonstructionScenario _scenario;
 
+        [KSPField]
+        public float DekonstructRatio = 0.25f;
+
         [KSPEvent(name = "Dekonstructor", isDefault = false, guiActive = true, guiName = "Dekonstructor")]
         public void OpenWindow()
         {
