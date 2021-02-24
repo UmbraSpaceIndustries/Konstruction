@@ -60,7 +60,6 @@
     </Reference>
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="Extensions\DropdownOptionWithId.cs" />
     <Compile Include="Interfaces\IKonstructor.cs" />
     <Compile Include="Interfaces\IResourceTransferController.cs" />
     <Compile Include="Interfaces\ITransferTargetsController.cs" />
