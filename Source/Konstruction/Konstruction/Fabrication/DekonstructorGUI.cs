@@ -6,7 +6,6 @@ using UnityEngine;
 using KSP.UI.Screens;
 using System.Collections.Generic;
 using USITools;
-using USITools.UITools;
 using Konstruction.Utilities;
 
 namespace Konstruction.Fabrication
