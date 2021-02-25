@@ -94,6 +94,7 @@
     </Reference>
     <Reference Include="USIToolsUI">
       <HintPath>..\..\..\..\..\KSP_DEV\GameData\000_USITools\USIToolsUI.dll</HintPath>
+      <Private>False</Private>
     </Reference>
   </ItemGroup>
   <ItemGroup>
