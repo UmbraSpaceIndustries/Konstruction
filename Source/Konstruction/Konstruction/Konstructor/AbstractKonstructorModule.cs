@@ -16,6 +16,7 @@ namespace Konstruction
         protected float _cachedDryMass;
         protected float _cachedFundsCost;
         protected ProtoVessel _cachedProtoVessel;
+        protected ShipConstruct _cachedShipConstruct;
         protected Dictionary<string, KonstructorResourceMetadata> _cachedResources;
         protected Texture2D _cachedThumbnail;
         protected ConfigNode _craftConfigNode;
@@ -26,8 +27,8 @@ namespace Konstruction
         private double _nextRefreshTime;
         protected string _noVesselSelectedErrorText;
         protected string _selectedCraftFilePath;
-        private KonstructionScenario _scenario;
-        private ShipThumbnailService _thumbnailService;
+        protected KonstructionScenario _scenario;
+        protected ShipThumbnailService _thumbnailService;
         protected string _unavailablePartsErrorText;
         protected KonstructorWindow _window;
 
@@ -68,17 +69,16 @@ namespace Konstruction
 
         protected ProtoVessel CreateProtoVessel()
         {
-            ShipConstruct construct = null;
             ProtoVessel protoVessel = null;
-            ProtoPartSnapshot partSnapshot = null;
+            ShipConstruct construct = null;
             Vessel vessel = null;
             try
             {
-                // Cache the ship config from the VAB/SPH, load the selected .craft file
+                // Backup the ship config from the VAB/SPH, load the selected .craft file
                 //   and restore the cached config from the VAB/SPH
-                var cachedConstruct = ShipConstruction.ShipConfig;
+                var constructBak = ShipConstruction.ShipConfig;
                 construct = ShipConstruction.LoadShip(_selectedCraftFilePath);
-                ShipConstruction.ShipConfig = cachedConstruct;
+                ShipConstruction.ShipConfig = constructBak;
 
                 // Calculate vessel cost and mass and generate a thumbnail
                 construct.GetShipCosts(out _cachedFundsCost, out _);
@@ -114,7 +114,7 @@ namespace Konstruction
                     part.UpdateOrgPosAndRot(rootPart);
 
                     part.vessel = vessel;
-                    partSnapshot = new ProtoPartSnapshot(part, protoVessel);
+                    var partSnapshot = new ProtoPartSnapshot(part, protoVessel);
                     foreach (var resource in partSnapshot.resources)
                     {
                         if (resource.resourceName != "ElectricCharge")
@@ -340,6 +340,8 @@ namespace Konstruction
             return _cachedResources.Select(r => r.Value).ToList();
         }
 
+        public abstract void LaunchVessel();
+
         public override void OnStart(StartState state)
         {
             base.OnStart(state);
@@ -384,8 +386,6 @@ namespace Konstruction
                 onCancel: () => { },
                 showMergeOption: false);
         }
-
-        public abstract void SpawnVessel();
 
         protected abstract void VesselSelected(string filePath, CraftBrowserDialog.LoadType loadType);
     }

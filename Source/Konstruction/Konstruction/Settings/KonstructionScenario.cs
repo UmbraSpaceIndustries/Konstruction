@@ -1,6 +1,8 @@
 ﻿using KonstructionUI;
+using KSP.UI.Screens;
 using System;
 using System.IO;
+using System.Linq;
 using UnityEngine;
 using USITools;
 
@@ -16,6 +18,15 @@ namespace Konstruction
         public GameObject ResourceTransferPanelPrefab { get; private set; }
         public GameObject ResourceTransferWindowPrefab { get; private set; }
         public ServiceManager ServiceManager { get; private set; }
+
+        public void LaunchVessel(Action spawnHandler)
+        {
+            spawnHandler.Invoke();
+            var spawnedVessel = FlightGlobals.Vessels.Last();
+            FlightGlobals.SetActiveVessel(spawnedVessel);
+            spawnedVessel.currentStage = -1;
+            StageManager.BeginFlight();
+        }
 
         public override void OnAwake()
         {

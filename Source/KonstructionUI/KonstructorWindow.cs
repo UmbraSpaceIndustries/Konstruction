@@ -111,7 +111,7 @@ namespace KonstructionUI
             {
                 try
                 {
-                    _konstructor.SpawnVessel();
+                    _konstructor.LaunchVessel();
                     HideColumns();
                     HideSelectedShip();
                     _shipMetadata = null;
