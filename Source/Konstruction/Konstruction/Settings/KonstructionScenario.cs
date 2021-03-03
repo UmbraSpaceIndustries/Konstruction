@@ -23,6 +23,18 @@ namespace Konstruction
         {
             spawnHandler.Invoke();
             var spawnedVessel = FlightGlobals.Vessels.Last();
+            foreach (var part in spawnedVessel.parts)
+            {
+                foreach (var resource in part.Resources)
+                {
+                    if (resource.resourceName != "ElectricCharge")
+                    {
+                        resource.amount = 0d;
+                    }
+                }
+            }
+            FlightDriver.CanRevertToPostInit = false;
+            FlightDriver.CanRevertToPrelaunch = false;
             FlightGlobals.SetActiveVessel(spawnedVessel);
             spawnedVessel.currentStage = -1;
             StageManager.BeginFlight();
