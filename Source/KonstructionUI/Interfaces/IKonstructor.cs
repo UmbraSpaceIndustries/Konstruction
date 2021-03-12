@@ -20,7 +20,7 @@ namespace KonstructionUI
         string SelectedShipHeaderText { get; }
         string TitleBarText { get; }
 
+        void LaunchVessel();
         void ShowShipSelector();
-        void SpawnVessel();
     }
 }

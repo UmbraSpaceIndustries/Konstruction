@@ -39,7 +39,7 @@ namespace Konstruction
             }
         }
 
-        public override void SpawnVessel()
+        public override void LaunchVessel()
         {
             if (FlightGlobals.ActiveVessel.situation != Vessel.Situations.ORBITING)
             {
@@ -93,10 +93,11 @@ namespace Konstruction
             var spawnedProtoVessel = new ProtoVessel(vesselConfigNode, HighLogic.CurrentGame);
             spawnedProtoVessel.Load(HighLogic.CurrentGame.flightState);
 
-            var spawnedVessel = FlightGlobals.Vessels.Last();
-            spawnedVessel.currentStage = 1;
-
             _window.CloseWindow();
+
+            var spawnedVessel = FlightGlobals.Vessels.Last();
+            spawnedVessel.protoVessel.stage = int.MaxValue;
+            FlightGlobals.SetActiveVessel(spawnedVessel);
         }
 
         protected override void VesselSelected(string filePath, CraftBrowserDialog.LoadType loadType)
