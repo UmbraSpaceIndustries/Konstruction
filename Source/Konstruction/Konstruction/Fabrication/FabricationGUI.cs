@@ -1,12 +1,10 @@
-﻿using System;
+﻿using Konstruction.Utilities;
+using System;
+using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Reflection;
 using UnityEngine;
-using KSP.UI.Screens;
-using System.Collections.Generic;
-using USITools;
-using Konstruction.Utilities;
 
 namespace Konstruction.Fabrication
 {
@@ -80,7 +78,7 @@ namespace Konstruction.Fabrication
                 //*   CATEGORIES
                 //*****************
                 GUILayout.BeginVertical();
-                GUILayout.Label(string.Format("<color=#ffd900>Categories</color>"), _labelStyle, GUILayout.Width(120));
+                GUILayout.Label("<color=#ffd900>Categories</color>", _labelStyle, GUILayout.Width(120));
                 scrollPosCat = GUILayout.BeginScrollView(scrollPosCat, _scrollStyle, GUILayout.Width(160), GUILayout.Height(480));
 
                 for (int i = 0; i < cats.Count; ++i)
@@ -91,7 +89,7 @@ namespace Konstruction.Fabrication
                     {
                         catCol = "ffd900";
                     }
-                    if (GUILayout.Button(string.Format("<color=#{0}>{1}</color>", catCol, cat, "Label"), _labelStyle, GUILayout.Width(120)))
+                    if (GUILayout.Button($"<color=#{catCol}>{cat}</color>", _labelStyle, GUILayout.Width(120)))
                     {
                         currentCat = cat;
                         GetPartsForCategory(cat);
@@ -105,7 +103,7 @@ namespace Konstruction.Fabrication
                 //*   PARTS
                 //*****************
                 GUILayout.BeginVertical();
-                GUILayout.Label(string.Format("<color=#ffd900>Parts</color>"), _labelStyle, GUILayout.Width(120));
+                GUILayout.Label("<color=#ffd900>Parts</color>", _labelStyle, GUILayout.Width(120));
                 scrollPosPart = GUILayout.BeginScrollView(scrollPosPart, _scrollStyle, GUILayout.Width(380), GUILayout.Height(480));
 
                 foreach (var item in catParts.OrderBy(x => x.partTitle))
@@ -115,7 +113,7 @@ namespace Konstruction.Fabrication
                     {
                         itemCol = "ffd900";
                     }
-                    if (GUILayout.Button(string.Format("<color=#{0}>{1}</color>", itemCol, item.partTitle, "Label"), _labelStyle, GUILayout.Width(340)))
+                    if (GUILayout.Button($"<color=#{itemCol}>{item.partTitle}</color>", _labelStyle, GUILayout.Width(340)))
                     {
                         currentItem = item;
                         currentPart = GetPartByName(currentItem.partName);
@@ -137,14 +135,13 @@ namespace Konstruction.Fabrication
                 //   [ BUILD IT! ]
                 //
                 GUILayout.BeginVertical();
-                GUILayout.Label(string.Format(" "), _labelStyle, GUILayout.Width(120)); //Spacer
+                GUILayout.Label(" ", _labelStyle, GUILayout.Width(120)); //Spacer
 
                 if (!string.IsNullOrEmpty(currentItem.partName))
                 {
-                    var costData = Utilities.PartUtilities.GetPartCost(currentPart, _persistence);
+                    var costData = PartUtilities.GetPartCost(currentPart, _persistence);
 
                     var mvColor = "ffffff";
-                    var eColor = "ffffff";
                     var valMVIn = true;
                     var valMVOut = true;
                     var valE = true;
@@ -155,11 +152,9 @@ namespace Konstruction.Fabrication
                     //*********************
                     valMVOut = IsSlotAvailable(currentPart);
                     valMVIn = IsPrinterAvailable(currentPart, printMass, printVolume);
-                    valE = Utilities.CrewUtilities.DoesVesselHaveCrewType("Engineer");
+                    valE = CrewUtilities.DoesVesselHaveCrewType("Engineer");
 
-                    if (!valMVIn)
-                        mvColor = "ff6e69";
-                    if (!valMVOut)
+                    if (!(valMVIn || valMVOut))
                         mvColor = "ff6e69";
 
                     GUILayout.BeginHorizontal();
@@ -167,27 +162,36 @@ namespace Konstruction.Fabrication
                     GUILayout.EndHorizontal();
 
                     GUILayout.BeginHorizontal();
-                    GUILayout.Label(string.Format("<color=#ffd900>Mass:</color>"), _labelStyle, GUILayout.Width(60));
-                    GUILayout.Label(string.Format("<color=#{0}>{1}/{2} t</color>", mvColor, currentPart.partPrefab.mass - currentPart.partPrefab.resourceMass, printMass), _labelStyle, GUILayout.Width(200));
+                    GUILayout.Label("<color=#ffd900>Mass:</color>", _labelStyle, GUILayout.Width(60));
+                    GUILayout.Label(
+                        $"<color=#{mvColor}>{currentPart.partPrefab.mass - currentPart.partPrefab.resourceMass:N1}/{printMass:N1} t</color>",
+                        _labelStyle,
+                        GUILayout.Width(200));
                     GUILayout.EndHorizontal();
 
                     GUILayout.BeginHorizontal();
-                    GUILayout.Label(string.Format("<color=#ffd900>Volume:</color>"), _labelStyle, GUILayout.Width(60));
-                    GUILayout.Label(string.Format("<color=#{0}>{1}/{2} L</color>", mvColor, currentPart.partPrefab.FindModuleImplementing<ModuleCargoPart>().packedVolume, printVolume), _labelStyle, GUILayout.Width(200));
+                    GUILayout.Label("<color=#ffd900>Volume:</color>", _labelStyle, GUILayout.Width(60));
+                    GUILayout.Label(
+                        $"<color=#{mvColor}>{currentPart.partPrefab.FindModuleImplementing<ModuleCargoPart>().packedVolume:N0}/{printVolume:N0} L</color>",
+                        _labelStyle,
+                        GUILayout.Width(200));
                     GUILayout.EndHorizontal();
 
                     foreach (var cost in costData)
                     {
-                        var valThisRes = Utilities.PartUtilities.ResourcesExist(cost.Resource.name, cost.Quantity);
+                        var valThisRes = PartUtilities.ResourcesExist(cost.Resource.name, cost.Quantity);
                         var resColor = "ffffff";
                         if (!valThisRes)
                         {
                             resColor = "ff6e69";
                             valRes = false;
                         }
-                        var qoh = Utilities.PartUtilities.GetResourceQty(cost.Resource.name);
+                        var qoh = PartUtilities.GetResourceQty(cost.Resource.name);
                         GUILayout.BeginHorizontal();
-                        GUILayout.Label(String.Format("<color=#{0}>{1} {2}/{3}</color>", resColor, cost.Resource.name, qoh, cost.Quantity), _detailStyle, GUILayout.Width(250));
+                        GUILayout.Label(
+                            $"<color=#{resColor}>{cost.Resource.name} {qoh:N1}/{cost.Quantity:N1}</color>",
+                            _detailStyle,
+                            GUILayout.Width(250));
                         GUILayout.EndHorizontal();
                     }
 
@@ -199,15 +203,15 @@ namespace Konstruction.Fabrication
                             BuildAThing(currentItem.partName);
                     }
                     if (!valE)
-                        GUILayout.Label(string.Format("<color=#ff6e69>Engineer not present in active vessel.</color>"), _labelStyle, GUILayout.Width(320));
+                        GUILayout.Label("<color=#ff6e69>Engineer not present in active vessel.</color>", _labelStyle, GUILayout.Width(320));
                     if (!valMVIn)
-                        GUILayout.Label(string.Format("<color=#ff6e69>Insufficient KonFabricator capacity to build this part.</color>"), _labelStyle, GUILayout.Width(320));
+                        GUILayout.Label("<color=#ff6e69>Insufficient KonFabricator capacity to build this part.</color>", _labelStyle, GUILayout.Width(320));
                     if (!valMVOut)
-                        GUILayout.Label(string.Format("<color=#ff6e69>Cannot find an inventory slot that will fit this part.</color>"), _labelStyle, GUILayout.Width(320));
+                        GUILayout.Label("<color=#ff6e69>Cannot find an inventory slot that will fit this part.</color>", _labelStyle, GUILayout.Width(320));
                     if (!valRes)
-                        GUILayout.Label(string.Format("<color=#ff6e69>Insufficient resources.</color>"), _labelStyle, GUILayout.Width(320));
+                        GUILayout.Label("<color=#ff6e69>Insufficient resources.</color>", _labelStyle, GUILayout.Width(320));
 
-                    GUILayout.Label(string.Format(" "), _labelStyle, GUILayout.Width(50)); //Spacer
+                    GUILayout.Label(" ", _labelStyle, GUILayout.Width(50)); //Spacer
                     if (GUILayout.Button("Close Window"))
                         SetVisible(false);
                     GUILayout.EndVertical();
@@ -344,7 +348,7 @@ namespace Konstruction.Fabrication
                     {
                         if (inv.IsSlotEmpty(z))
                         {
-                            Utilities.PartUtilities.ConsumeResources(Utilities.PartUtilities.GetPartCost(iPart, _persistence));
+                            PartUtilities.ConsumeResources(Utilities.PartUtilities.GetPartCost(iPart, _persistence));
                             foreach (var r in iPart.partPrefab.Resources)
                             {
                                 r.amount = 0;
@@ -421,6 +425,5 @@ namespace Konstruction.Fabrication
             nfTexture = LoadTexture(Path.Combine(path, "notfound.png"));
             thumbTexture = LoadTexture(Path.Combine(path, "notfound.png"));
         }
-
     }
 }
