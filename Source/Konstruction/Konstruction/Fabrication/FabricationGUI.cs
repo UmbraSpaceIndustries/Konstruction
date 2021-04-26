@@ -422,8 +422,8 @@ namespace Konstruction.Fabrication
         {
             //Load up some default textures
             var path = Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location);
-            nfTexture = LoadTexture(Path.Combine(path, "notfound.png"));
-            thumbTexture = LoadTexture(Path.Combine(path, "notfound.png"));
+            nfTexture = LoadTexture(Path.Combine(path, "Assets/notfound.png"));
+            thumbTexture = LoadTexture(Path.Combine(path, "Assets/notfound.png"));
         }
     }
 }

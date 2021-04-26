@@ -43,7 +43,7 @@ namespace Konstruction
         void Awake()
         {
             var texture = new Texture2D(36, 36, TextureFormat.RGBA32, false);
-            var textureFile = Path.Combine(Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location), "Servo.png");
+            var textureFile = Path.Combine(Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location), "Assets/Servo.png");
             print("Loading " + textureFile);
             texture.LoadImage(File.ReadAllBytes(textureFile));
             this.servoButton = ApplicationLauncher.Instance.AddModApplication(GuiOn, GuiOff, null, null, null, null,
