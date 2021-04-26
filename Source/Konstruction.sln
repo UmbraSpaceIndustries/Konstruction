@@ -5,7 +5,7 @@ VisualStudioVersion = 16.0.30804.86
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Konstruction", "Konstruction\Konstruction.csproj", "{8699BBCB-15F3-40C6-A001-46E08886360C}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "KonstructionUI", "..\KonstructionUI\KonstructionUI.csproj", "{D487F008-632D-41C3-8827-7711EAE23D15}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "KonstructionUI", "KonstructionUI\KonstructionUI.csproj", "{D487F008-632D-41C3-8827-7711EAE23D15}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
