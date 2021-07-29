@@ -111,6 +111,7 @@
     <Compile Include="ResourceTransfers\ResourceTransferController.cs" />
     <Compile Include="ResourceTransfers\ResourceTransferScenario.cs" />
     <Compile Include="ResourceTransfers\ResourceTransferTarget.cs" />
+    <Compile Include="Settings\Konstruction_GameParameters.cs" />
     <Compile Include="Utilities\PartUtilities.cs" />
     <Compile Include="Misc\ModuleConstructedPart.cs" />
     <Compile Include="Misc\ModuleCounterweight.cs" />

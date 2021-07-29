@@ -156,9 +156,9 @@ namespace Konstruction
 
         public void Update(float deltaTime)
         {
-            var amount = 0d;
             if (_isTransferring)
             {
+                double amount;
                 switch (Mode)
                 {
                     case TransferMode.FastAtoB:

@@ -366,6 +366,16 @@ namespace KonstructionUI
                 var panel = _resourcePanels[resource.Name];
                 panel.SetValues(resource);
             }
+            if (!_shipMetadata.KonstructorMetadata.CanSpawn)
+            {
+                DisableBuildButton();
+                ShowAlert(_konstructor.InsufficientResourcesErrorText);
+            }
+            else
+            {
+                EnableBuildButton();
+                HideAlert();
+            }
         }
     }
 }

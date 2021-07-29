@@ -1,12 +1,8 @@
-﻿using System;
-using System.IO;
-using System.Linq;
-using System.Reflection;
-using UnityEngine;
-using KSP.UI.Screens;
+﻿using Konstruction.Utilities;
+using System;
 using System.Collections.Generic;
-using USITools;
-using Konstruction.Utilities;
+using System.Linq;
+using UnityEngine;
 
 namespace Konstruction.Fabrication
 {
@@ -131,12 +127,12 @@ namespace Konstruction.Fabrication
 
                 GUILayout.BeginHorizontal();
                 GUILayout.Label(string.Format("<color=#ffd900>Mass:</color>"), _labelStyle, GUILayout.Width(60));
-                GUILayout.Label(string.Format("<color=#ffffff>{0} t</color>", totMass), _labelStyle, GUILayout.Width(200));
+                GUILayout.Label($"<color=#ffffff>{totMass:N1} t</color>", _labelStyle, GUILayout.Width(200));
                 GUILayout.EndHorizontal();
 
                 GUILayout.BeginHorizontal();
                 GUILayout.Label(string.Format("<color=#ffd900>Volume:</color>"), _labelStyle, GUILayout.Width(60));
-                GUILayout.Label(string.Format("<color=#ffffff>{0} L</color>", totVol), _labelStyle, GUILayout.Width(200));
+                GUILayout.Label($"<color=#ffffff>{totVol:N1} L</color>", _labelStyle, GUILayout.Width(200));
                 GUILayout.EndHorizontal();
 
                 GUILayout.Label(string.Format(" "), _labelStyle, GUILayout.Width(120)); //Spacer
@@ -156,7 +152,10 @@ namespace Konstruction.Fabrication
                     }
 
                     GUILayout.BeginHorizontal();
-                    GUILayout.Label(String.Format("<color=#{0}>    - {1} {2}/{3}</color>", resColor, cost.Resource.name, cost.Quantity, space), _detailStyle, GUILayout.Width(250));
+                    GUILayout.Label(
+                        $"<color=#{resColor}>    - {cost.Resource.displayName} {cost.Quantity}/{space:N0}</color>",
+                        _detailStyle,
+                        GUILayout.Width(250));
                     GUILayout.EndHorizontal();
                 }
 

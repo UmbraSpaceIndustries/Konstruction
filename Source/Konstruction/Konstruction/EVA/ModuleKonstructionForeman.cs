@@ -1,4 +1,5 @@
-﻿using System.Text;
+﻿using System;
+using System.Text;
 using USITools;
 
 namespace Konstruction
@@ -18,7 +19,7 @@ namespace Konstruction
             if (kPoints > 0)
             {
                 var max = ApplyResults(kPoints);
-                ScreenMessages.PostScreenMessage(string.Format("EVA Construction set to {0}kg",max), 5f, ScreenMessageStyle.UPPER_CENTER);
+                ScreenMessages.PostScreenMessage($"EVA Construction set to {max / 1000:N2}t", 5f, ScreenMessageStyle.UPPER_CENTER);
             }
         }
 
@@ -91,15 +92,16 @@ namespace Konstruction
             return points;
         }
 
-
-        public int ApplyResults(int points)
+        public double ApplyResults(int points)
         {
+            // Calculate and set new mass limit
             var newMass = PhysicsGlobals.GravitationalAcceleration * points * constructionWeightMultiplier;
-            //Adjust EVA Construction Limit based on gravity
             PhysicsGlobals.ConstructionWeightLimit = newMass;
-            return (int)(newMass);
-        }
 
+            // Determine the gravity-adjusted mass limit for the current body
+            var surfaceGravity = vessel.mainBody.gravParameter / Math.Pow(vessel.mainBody.Radius, 2d);
+            return newMass / surfaceGravity;
+        }
 
         public override string GetInfo()
         {

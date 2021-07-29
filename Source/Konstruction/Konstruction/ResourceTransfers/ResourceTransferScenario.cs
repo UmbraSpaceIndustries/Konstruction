@@ -13,12 +13,13 @@ namespace Konstruction
     [KSPScenario(ScenarioCreationOptions.AddToAllGames, GameScenes.FLIGHT)]
     public class ResourceTransferScenario : ScenarioModule, ITransferTargetsController
     {
-        private const float LOCAL_LOGISTICS_RANGE = 150f;
         private static readonly List<string> BLACKLIST = new List<string>
         {
             "ResourceLode",
         };
 
+        private string _insufficientTargetsMessage
+            = "#LOC_USI_ResourceTransfers_InsufficientTransferTargetsMessage";
         private double _nextLazyUpdate;
         private ServiceManager _serviceManager;
         private ApplicationLauncherButton _toolbarButton;
@@ -28,8 +29,19 @@ namespace Konstruction
             = "#LOC_USI_ResourceTransfers_CurrentVesselText";
         public string DropdownDefaultText { get; private set; }
             = "#LOC_USI_ResourceTransfers_DropdownDefaultText";
-        public string InsufficientTransferTargetsMessage { get; private set; }
-            = "#LOC_USI_ResourceTransfers_InsufficientTransferTargetsMessage";
+        public string InsufficientTransferTargetsMessage
+        {
+            get
+            {
+                if (_insufficientTargetsMessage.StartsWith("#"))
+                {
+                    return _insufficientTargetsMessage;
+                }
+                return string.Format(
+                    _insufficientTargetsMessage,
+                    Konstruction_GameParameters.ResourceTransferAllowedRadius.ToString("N0"));
+            }
+        }
         public string Row1HeaderLabel { get; private set; }
             = "#LOC_USI_ResourceTransfers_Row1HeaderLabel";
         public string Row2HeaderLabel { get; private set; }
@@ -63,12 +75,9 @@ namespace Konstruction
             {
                 DropdownDefaultText = dropdownDefaultText;
             }
-            if (Localizer.TryGetStringByTag(
+            Localizer.TryGetStringByTag(
                 "#LOC_USI_ResourceTransfers_InsufficientTransferTargetsMessage",
-                out string insufficientTargetsMessage))
-            {
-                InsufficientTransferTargetsMessage = insufficientTargetsMessage;
-            }
+                out _insufficientTargetsMessage);
             if (Localizer.TryGetStringByTag(
                 "#LOC_USI_ResourceTransfers_Row1HeaderLabel",
                 out string row1HeaderLabel))
@@ -98,7 +107,7 @@ namespace Konstruction
         public List<ResourceTransferTargetMetadata> GetResourceTransferTargets()
         {
             var nearbyVessels = LogisticsTools.GetNearbyVessels(
-                LOCAL_LOGISTICS_RANGE,
+                Konstruction_GameParameters.ResourceTransferAllowedRadius,
                 true,
                 FlightGlobals.ActiveVessel,
                 false);

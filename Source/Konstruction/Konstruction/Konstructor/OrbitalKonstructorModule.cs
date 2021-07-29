@@ -11,6 +11,9 @@ namespace Konstruction
 {
     public class OrbitalKonstructorModule : AbstractKonstructorModule
     {
+        private const double KEEPOUT_ZONE_RADIUS = 200d;
+        private const double SPAWN_LOCATION_OFFSET = 100d;
+
         private string _launchClampErrorText;
         private string _nearbyVesselsErrorText;
         private string _notInOrbitErrorText;
@@ -51,7 +54,7 @@ namespace Konstruction
                 throw new Exception(_noVesselSelectedErrorText);
             }
 
-            if (LogisticsTools.AnyNearbyVessels(100d, FlightGlobals.ActiveVessel))
+            if (LogisticsTools.AnyNearbyVessels(KEEPOUT_ZONE_RADIUS, FlightGlobals.ActiveVessel))
             {
                 throw new Exception(_nearbyVesselsErrorText);
             }
@@ -64,7 +67,7 @@ namespace Konstruction
                 now,
                 out Vector3d position,
                 out Vector3d velocity);
-            position.x += 50d;
+            position.x += SPAWN_LOCATION_OFFSET;
             var orbit = new Orbit(vesselOrbit);
             orbit.UpdateFromStateVectors(
                 position,
