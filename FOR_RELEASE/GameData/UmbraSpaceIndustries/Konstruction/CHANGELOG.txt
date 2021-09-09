@@ -1,4 +1,4 @@
-1.4.1 - TBD
+112.0 - 2021.09.19
 ------------------
 Fixed Akita Seat CTT Placement
 All KIS support has been deprecated in favor of the stock inventory system
