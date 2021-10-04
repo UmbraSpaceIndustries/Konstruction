@@ -157,6 +157,7 @@ namespace Konstruction
             return protoVessel;
         }
 
+        #region Localization
         protected virtual void GetLocalizedPropertyValues()
         {
             if (Localizer.TryGetStringByTag(
@@ -280,6 +281,7 @@ namespace Konstruction
                 _unavailablePartsErrorText = unavailablePartsErrorText;
             }
         }
+        #endregion
 
         protected List<KonstructorResourceMetadata> GetResourceCosts()
         {
