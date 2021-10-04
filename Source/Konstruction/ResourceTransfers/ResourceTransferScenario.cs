@@ -172,7 +172,10 @@ namespace Konstruction
             base.OnAwake();
 
             GetLocalizedLabels();
+        }
 
+        private void Start()
+        {
             var usiTools = USI_AddonServiceManager.Instance;
             if (usiTools != null)
             {
