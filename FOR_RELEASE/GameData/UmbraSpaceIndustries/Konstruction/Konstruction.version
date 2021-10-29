@@ -1,9 +1,9 @@
 {
      "NAME":"Konstruction",
-	 "URL":"https://raw.githubusercontent.com/BobPalmer/Konstruction/main/FOR_RELEASE/GameData/UmbraSpaceIndustries/Konstruction/Konstruction.version",
-	 "DOWNLOAD":"https://github.com/BobPalmer/Konstruction/releases",
+	 "URL":"https://raw.githubusercontent.com/UmbraSpaceIndustries/Konstruction/main/FOR_RELEASE/GameData/UmbraSpaceIndustries/Konstruction/Konstruction.version",
+	 "DOWNLOAD":"https://github.com/UmbraSpaceIndustries/Konstruction/releases",
      "GITHUB":{
-         "USERNAME":"BobPalmer",
+         "USERNAME":"UmbraSpaceIndustries",
          "REPOSITORY":"Konstruction",
          "ALLOW_PRE_RELEASE":false
      },
