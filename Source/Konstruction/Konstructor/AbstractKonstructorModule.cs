@@ -12,6 +12,7 @@ namespace Konstruction
 {
     public abstract class AbstractKonstructorModule : PartModule, IKonstructor
     {
+        private static List<string> FREE_RESOURCES = new List<string> { "Ablator", "ElectricCharge" };
         protected List<CostData> _cachedCostData;
         protected float _cachedDryMass;
         protected float _cachedFundsCost;
@@ -117,7 +118,7 @@ namespace Konstruction
                     var partSnapshot = new ProtoPartSnapshot(part, protoVessel);
                     foreach (var resource in partSnapshot.resources)
                     {
-                        if (resource.resourceName != "ElectricCharge")
+                        if (!FREE_RESOURCES.Contains(resource.resourceName))
                         {
                             resource.amount = 0d;
                         }
