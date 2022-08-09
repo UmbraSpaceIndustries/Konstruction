@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Text;
+using Konstruction.Utilities;
 using USITools;
 
 namespace Konstruction
@@ -32,25 +33,14 @@ namespace Konstruction
             var cp = GetConstructionPoints();
             ret += cp;
 
-            var hasEngineer = DoesPartHaveEngineer();
+            var hasEngineer = CrewUtilities.DoesVesselHaveCrewType("Engineer");
             if (!hasEngineer)
             {
-                ScreenMessages.PostScreenMessage("Engineer not present in module - Konstruction bonus reduced", 5f, ScreenMessageStyle.UPPER_CENTER);
+                ScreenMessages.PostScreenMessage("Engineer not present in vessel - Konstruction bonus reduced", 5f, ScreenMessageStyle.UPPER_CENTER);
                 ret /= 2;
             }
 
             return ret;
-        }
-
-        public bool DoesPartHaveEngineer()
-        {
-            var cCount = part.protoModuleCrew.Count;
-            for (int i = 0; i < cCount; ++i)
-            {
-                if (part.protoModuleCrew[i].experienceTrait.TypeName == "Engineer")
-                    return true;
-            }
-            return false;
         }
 
         public int GetKerbalQuantity()
