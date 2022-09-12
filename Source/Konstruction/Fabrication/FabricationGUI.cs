@@ -152,7 +152,10 @@ namespace Konstruction.Fabrication
                     //*********************
                     valMVOut = IsSlotAvailable(currentPart);
                     valMVIn = IsPrinterAvailable(currentPart, printMass, printVolume);
-                    valE = CrewUtilities.DoesVesselHaveCrewType("Engineer");
+                    string _engineerName = "Engineer";
+                    if (KSP.Localization.Localizer.TryGetStringByTag("#LOC_USI_Konstruction_Engineer_Name", out string engineerName))
+                        _engineerName = engineerName;
+                    valE = CrewUtilities.DoesVesselHaveCrewType(_engineerName);
 
                     if (!(valMVIn || valMVOut))
                         mvColor = "ff6e69";
