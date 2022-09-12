@@ -45,9 +45,12 @@ namespace Konstruction
         public bool DoesPartHaveEngineer()
         {
             var cCount = part.protoModuleCrew.Count;
+            string _engineerName = "Engineer";
+            if(KSP.Localization.Localizer.TryGetStringByTag("#LOC_USI_Konstruction_Engineer_Name", out string engineerName))
+                _engineerName = engineerName;
             for (int i = 0; i < cCount; ++i)
             {
-                if (part.protoModuleCrew[i].experienceTrait.TypeName == "Engineer")
+                if (part.protoModuleCrew[i].experienceTrait.TypeName == _engineerName)
                     return true;
             }
             return false;
